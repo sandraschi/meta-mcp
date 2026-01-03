@@ -1,0 +1,29 @@
+[project]
+name = "meta_mcp"
+version = "0.2.1-beta"
+description = "MetaMCP - The Ultimate 'Argh-Coding' Bloat-Buster - Comprehensive MCP server management platform"
+authors = [
+    { name = "Sandra Schipal", email = "sandraschi@gmail.com" }
+]
+dependencies = [
+    "fastmcp",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "pydantic-settings",
+    "python-multipart",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+meta-mcp = "meta_mcp.mcp_server:main"
+meta-mcp-server = "meta_mcp.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["meta_mcp*"]
