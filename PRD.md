@@ -37,10 +37,10 @@ Service crashed with no clear error message
 
 ### 🔧 **Diagnostic Tools**
 
-#### **🚨 EmojiBuster (Priority 1 - CRITICAL)**
-- **Scan repositories** for Unicode characters in logger calls
-- **Auto-fix capability** with safe ASCII replacements
-- **Comprehensive audit** across multiple repositories
+#### **🚨 EmojiBuster / Safe Scanner (Priority 1 - CRITICAL)**
+- **Audit repositories** using the `safe_scanner` philosophy (literal-free detection)
+- **Hex-based identification** prevents auditing tool crashes (e.g., recursive grep)
+- **Auto-fix capability** with standard ASCII replacements
 - **Prevention tools** (pre-commit hooks, CI validation)
 - **Success stories tracking** for stability verification
 
@@ -109,6 +109,7 @@ Service crashed with no clear error message
 - **Client configuration analysis**
 - **Tool inventory and metadata**
 - **Connection status monitoring**
+- **Client Integration Diagnostics**: Cross-client health checks
 
 #### **⚙️ Configuration Management**
 - **Safe client configuration updates**
@@ -167,7 +168,8 @@ Service crashed with no clear error message
 ### Phase 1: Foundation (Current - Q1 2026)
 - [x] **Basic MCP Server**: FastMCP integration
 - [x] **Tool Registry**: Auto-discovery system
-- [ ] **EmojiBuster Tool**: Unicode logging crash prevention
+- [x] **EmojiBuster / Safe Scanner**: Unicode logging and docstring crash prevention
+- [x] **Agent Protocol Updates**: Implement "Follow All Rules" frontmatter in `gemini.md`
 - [ ] **SOTA Validator**: FastMCP 2.14.1+ compliance
 - [ ] **Enhanced Documentation**: Complete standards integration
 
@@ -192,16 +194,17 @@ All tools must implement FastMCP 2.14.1+ enhanced responses:
 - **Conversational Context**: Natural dialogue flow
 - **Rich Metadata**: Search and navigation support
 
-### Unicode Safety First
-- **Zero Unicode in Logging**: All tools must use ASCII-only logging
-- **Comprehensive Validation**: Pre-commit hooks and CI checks
-- **Auto-Fix Capability**: Automatic Unicode replacement
-- **Education Focus**: Clear guidance on Unicode safety
+### Unicode Safety First (Safe Scanner Standard)
+- **Zero Literal Unicode**: All tools must use hex escape sequences (e.g., `\uXXXX`) instead of literal emojis in source code.
+- **Global Docstring Safety**: docstrings must be ASCII-only to prevent client-side UI crashes.
+- **Comprehensive Validation**: Pre-commit hooks and CI checks for hex compliance.
+- **Auto-Fix Capability**: Automatic Unicode replacement and ASCII sanitization.
 
 ### Developer Experience
 - **Immediate Value**: Tools provide instant benefit
-- **Clear Documentation**: Comprehensive examples and patterns
+- **Clear Documentation**: Comprehensive examples and patterns (including Agent Protocol frontmatter)
 - **Progressive Disclosure**: Simple to advanced usage
+- **Native PowerShell Standard**: All scripts must use native cmdlets (no Linux aliases)
 - **Community Driven**: User feedback drives development
 
 ## 🚀 Go-to-Market Strategy

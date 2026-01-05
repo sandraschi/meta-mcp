@@ -26,7 +26,7 @@ class ToolGroup:
     name: str
     description: str
     servers: List[str]  # MCP server names
-    icon: str = "📦"
+    icon: str = ""
     status: GroupStatus = GroupStatus.INACTIVE
     max_tools: int = 50  # Context budget for this group
     keywords: List[str] = field(default_factory=list)  # For auto-routing
@@ -43,7 +43,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Audio Production",
         description="DJ, DAW, music production tools",
         servers=["virtualdj-mcp", "reaper-mcp", "ableton-mcp"],
-        icon="🎵",
+        icon="",
         keywords=["music", "audio", "mix", "dj", "daw", "track", "bpm", "beat", "song"],
     ),
     
@@ -53,7 +53,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Video Production",
         description="Video editing, color grading, rendering",
         servers=["davinci-resolve-mcp", "premiere-mcp", "ffmpeg-mcp"],
-        icon="🎬",
+        icon="",
         keywords=["video", "edit", "timeline", "color", "render", "export", "clip", "footage"],
     ),
     
@@ -63,7 +63,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Smart Home",
         description="Lights, cameras, sensors, automation",
         servers=["tapo-mcp", "hue-mcp", "ring-mcp", "nest-mcp"],
-        icon="🏠",
+        icon="",
         keywords=["light", "camera", "motion", "temperature", "plug", "switch", "scene", "home"],
     ),
     
@@ -73,7 +73,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Media & Entertainment",
         description="Plex, media libraries, streaming",
         servers=["plex-mcp", "jellyfin-mcp", "spotify-mcp"],
-        icon="📺",
+        icon="",
         keywords=["movie", "show", "playlist", "library", "stream", "watch", "listen"],
     ),
     
@@ -83,7 +83,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Knowledge Management",
         description="Notes, memory, documentation",
         servers=["advanced-memory-mcp", "obsidian-mcp", "notion-mcp"],
-        icon="📚",
+        icon="",
         keywords=["note", "memory", "remember", "search", "document", "knowledge", "write"],
     ),
     
@@ -93,7 +93,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Development Tools",
         description="Git, CI/CD, code analysis",
         servers=["github-mcp", "gitlab-mcp", "docker-mcp"],
-        icon="💻",
+        icon="Computer",
         keywords=["code", "git", "deploy", "build", "test", "container", "repository"],
     ),
     
@@ -103,7 +103,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Transit & Location",
         description="Public transit, maps, weather",
         servers=["vienna-transit", "weather-mcp", "maps-mcp"],
-        icon="🚇",
+        icon="",
         keywords=["train", "bus", "transit", "route", "weather", "departure", "station"],
     ),
     
@@ -113,7 +113,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Communication",
         description="Email, calendar, messaging",
         servers=["gmail-mcp", "calendar-mcp", "slack-mcp", "teams-mcp"],
-        icon="💬",
+        icon="",
         keywords=["email", "message", "meeting", "calendar", "schedule", "send", "reply"],
     ),
     
@@ -123,7 +123,7 @@ PREDEFINED_GROUPS: Dict[str, ToolGroup] = {
         name="Web & Browser",
         description="Browser control, web scraping",
         servers=["cursor-browser-extension", "puppeteer-mcp", "playwright-mcp"],
-        icon="🌐",
+        icon="Global",
         keywords=["browse", "website", "click", "screenshot", "scrape", "navigate", "page"],
     ),
 }
@@ -207,7 +207,7 @@ class ToolGroupManager:
         name: str,
         servers: List[str],
         description: str = "",
-        icon: str = "📦",
+        icon: str = "",
         keywords: List[str] = None,
     ) -> ToolGroup:
         """Create a custom tool group."""

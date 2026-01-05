@@ -3,70 +3,75 @@ MCP Tool Discovery and Management
 
 This module provides functionality to discover, register, and manage MCP tools.
 """
+
 import importlib
 import inspect
-import logging
 import pkgutil
 from typing import Any, Dict, List, Optional, TypeVar, Union
 
+import structlog
 
 from meta_mcp.tools.decorators import ToolMetadata, tool
 
-logger = logging.getLogger("mcp.tools")
+logger = structlog.get_logger(__name__)
 
 # Type variable for generic functions
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ToolRegistry:
     """Registry for MCP tools."""
-    
+
     def __init__(self):
         self._tools: Dict[str, Dict[str, Any]] = {}
         self._tool_metadata: Dict[str, ToolMetadata] = {}
         self._discovered = False
-    
+
     def register(self, func: callable, metadata: Optional[ToolMetadata] = None) -> None:
         """
         Register a tool function with optional metadata.
-        
+
         Args:
             func: The tool function to register
             metadata: Optional metadata for the tool
         """
         tool_name = func.__name__
-        
+
         # Get or create metadata
         if metadata is None:
             metadata = getattr(func, "__mcp_metadata__", None) or ToolMetadata(
-                name=tool_name,
-                description=func.__doc__ or ""
+                name=tool_name, description=func.__doc__ or ""
             )
-        
+
         # Store the tool and its metadata
         self._tools[tool_name] = {
             "function": func,
             "module": func.__module__,
             "docstring": func.__doc__ or "",
-            "signature": str(inspect.signature(func))
+            "signature": str(inspect.signature(func)),
         }
         self._tool_metadata[tool_name] = metadata
-        
+
         logger.debug(
             "tool_registered",
             extra={
                 "tool": tool_name,
                 "module": func.__module__,
-                "metadata": metadata.to_dict() if hasattr(metadata, 'to_dict') else str(metadata)
-            }
+                "metadata": metadata.to_dict()
+                if hasattr(metadata, "to_dict")
+                else str(metadata),
+            },
         )
-    
-    def discover_tools(self, 
-                      package: Union[str, List[str]], 
-                      recursive: bool = True,
-                      skip_errors: bool = True) -> None:
+
+    def discover_tools(
+        self,
+        package: Union[str, List[str]],
+        recursive: bool = True,
+        skip_errors: bool = True,
+    ) -> None:
         """
         Discover and register tools from Python packages.
-        
+
         Args:
             package: Package name or list of package names to search for tools
             recursive: Whether to search subpackages recursively
@@ -76,7 +81,7 @@ class ToolRegistry:
             packages = [package]
         else:
             packages = package
-        
+
         for pkg in packages:
             try:
                 self._discover_package(pkg, recursive, skip_errors)
@@ -84,178 +89,171 @@ class ToolRegistry:
                 if skip_errors:
                     logger.warning(
                         "package_discovery_failed",
-                        extra={
-                            "package": pkg,
-                            "error": str(e)
-                        },
-                        exc_info=True
+                        extra={"package": pkg, "error": str(e)},
+                        exc_info=True,
                     )
                 else:
                     raise
-        
+
         self._discovered = True
         logger.info(
             "tool_discovery_complete",
-            extra={
-                "tools_registered": len(self._tools),
-                "packages_searched": packages
-            }
+            extra={"tools_registered": len(self._tools), "packages_searched": packages},
         )
-    
-    def _discover_package(self, 
-                         package: str, 
-                         recursive: bool = True, 
-                         skip_errors: bool = True) -> None:
+
+    def _discover_package(
+        self, package: str, recursive: bool = True, skip_errors: bool = True
+    ) -> None:
         """Discover tools in a package."""
         try:
             # Import the package
             module = importlib.import_module(package)
-            
+
             # Get the package path
             if not hasattr(module, "__path__"):
                 return
-            
+
             # Find all modules in the package
             for _, name, is_pkg in pkgutil.iter_modules(module.__path__):
                 full_name = f"{package}.{name}"
-                
+
                 try:
                     # Import the module
                     mod = importlib.import_module(full_name)
-                    
+
                     # Register tools in the module
                     self._register_tools_in_module(mod)
-                    
+
                     # Recursively process subpackages
                     if recursive and is_pkg:
                         self._discover_package(full_name, recursive, skip_errors)
-                
+
                 except Exception as e:
                     if skip_errors:
                         logger.warning(
                             "module_import_failed",
-                            extra={
-                                "module": full_name,
-                                "error": str(e)
-                            },
-                            exc_info=True
+                            extra={"module": full_name, "error": str(e)},
+                            exc_info=True,
                         )
                     else:
                         raise
-        
+
         except ImportError as e:
             if skip_errors:
                 logger.warning(
                     "package_import_failed",
-                    extra={
-                        "package": package,
-                        "error": str(e)
-                    },
-                    exc_info=True
+                    extra={"package": package, "error": str(e)},
+                    exc_info=True,
                 )
             else:
                 raise
-    
+
     def _register_tools_in_module(self, module: Any) -> None:
         """Register all tools found in a module."""
         for name, obj in inspect.getmembers(module):
             # Skip private members
-            if name.startswith('_'):
+            if name.startswith("_"):
                 continue
-            
+
             # Check if the object is a function with MCP metadata
             if inspect.isfunction(obj) and hasattr(obj, "__mcp_metadata__"):
                 self.register(obj)
-            
+
             # Check if the object is a class with MCP metadata
             elif inspect.isclass(obj) and hasattr(obj, "__mcp_metadata__"):
                 # Register the class itself if it's callable
                 if callable(obj):
                     self.register(obj)
-                
+
                 # Register class methods with MCP metadata
                 for method_name, method in inspect.getmembers(obj, inspect.isfunction):
                     if hasattr(method, "__mcp_metadata__"):
                         self.register(method)
-    
+
     def get_tool(self, name: str) -> Optional[callable]:
         """
         Get a tool function by name.
-        
+
         Args:
             name: Name of the tool to get
-            
+
         Returns:
             The tool function if found, None otherwise
         """
         if not self._discovered:
             self.discover_tools(["meta_mcp.tools"])
-        
+
         return self._tools.get(name, {}).get("function")
-    
+
     def get_metadata(self, name: str) -> Optional[ToolMetadata]:
         """
         Get metadata for a tool.
-        
+
         Args:
             name: Name of the tool
-            
+
         Returns:
             The tool's metadata if found, None otherwise
         """
         if not self._discovered:
             self.discover_tools(["meta_mcp.tools"])
-        
+
         return self._tool_metadata.get(name)
-    
+
     def list_tools(self) -> List[Dict[str, Any]]:
         """
         List all registered tools with their metadata.
-        
+
         Returns:
             List of dictionaries containing tool information
         """
         if not self._discovered:
             self.discover_tools(["meta_mcp.tools"])
-        
+
         result = []
         for name, tool_info in self._tools.items():
             metadata = self._tool_metadata.get(name, {})
-            result.append({
-                "name": name,
-                "module": tool_info["module"],
-                "description": metadata.description if hasattr(metadata, 'description') else "",
-                "version": metadata.version if hasattr(metadata, 'version') else "1.0.0",
-                "tags": metadata.tags if hasattr(metadata, 'tags') else [],
-                "signature": tool_info["signature"]
-            })
-        
+            result.append(
+                {
+                    "name": name,
+                    "module": tool_info["module"],
+                    "description": metadata.description
+                    if hasattr(metadata, "description")
+                    else "",
+                    "version": metadata.version
+                    if hasattr(metadata, "version")
+                    else "1.0.0",
+                    "tags": metadata.tags if hasattr(metadata, "tags") else [],
+                    "signature": tool_info["signature"],
+                }
+            )
+
         return result
-    
+
     def execute_tool(self, name: str, *args, **kwargs) -> Any:
         """
         Execute a tool by name with the given arguments.
-        
+
         Args:
             name: Name of the tool to execute
             *args: Positional arguments to pass to the tool
             **kwargs: Keyword arguments to pass to the tool
-            
+
         Returns:
             The result of the tool execution
-            
+
         Raises:
             KeyError: If the tool is not found
             Exception: Any exception raised by the tool
         """
         if not self._discovered:
             self.discover_tools(["meta_mcp.tools"])
-        
+
         if name not in self._tools:
             raise KeyError(f"Tool not found: {name}")
-        
+
         tool_func = self._tools[name]["function"]
-        
+
         # Log the tool execution
         logger.info(
             "tool_execution_start",
@@ -263,37 +261,33 @@ class ToolRegistry:
                 "tool": name,
                 "args": args,
                 "kwargs": kwargs,
-                "metadata": self._tool_metadata.get(name, {}).to_dict() 
-                           if hasattr(self._tool_metadata.get(name), 'to_dict') 
-                           else str(self._tool_metadata.get(name))
-            }
+                "metadata": self._tool_metadata.get(name, {}).to_dict()
+                if hasattr(self._tool_metadata.get(name), "to_dict")
+                else str(self._tool_metadata.get(name)),
+            },
         )
-        
+
         try:
             # Execute the tool
             result = tool_func(*args, **kwargs)
-            
+
             # Log successful execution
             logger.info(
                 "tool_execution_success",
                 extra={
                     "tool": name,
-                    "result": str(result)[:1000]  # Limit result size
-                }
+                    "result": str(result)[:1000],  # Limit result size
+                },
             )
-            
+
             return result
-            
+
         except Exception as e:
             # Log the error
             logger.error(
                 "tool_execution_error",
-                extra={
-                    "tool": name,
-                    "error": str(e),
-                    "error_type": type(e).__name__
-                },
-                exc_info=True
+                extra={"tool": name, "error": str(e), "error_type": type(e).__name__},
+                exc_info=True,
             )
             raise
 
@@ -322,12 +316,12 @@ def execute_tool(name: str, *args, **kwargs) -> Any:
     return registry.execute_tool(name, *args, **kwargs)
 
 
-def discover_tools(package: Union[str, List[str]], 
-                  recursive: bool = True, 
-                  skip_errors: bool = True) -> None:
+def discover_tools(
+    package: Union[str, List[str]], recursive: bool = True, skip_errors: bool = True
+) -> None:
     """
     Discover and register tools from Python packages.
-    
+
     Args:
         package: Package name or list of package names to search for tools
         recursive: Whether to search subpackages recursively
@@ -336,64 +330,115 @@ def discover_tools(package: Union[str, List[str]],
     registry.discover_tools(package, recursive, skip_errors)
 
 
-def discover_servers(search_paths: Optional[List[str]] = None,
-                   config_files: Optional[List[str]] = None,
-                   recursive: bool = True) -> List[Dict[str, Any]]:
+def discover_servers(
+    search_paths: Optional[List[str]] = None,
+    config_files: Optional[List[str]] = None,
+    recursive: bool = True,
+) -> List[Dict[str, Any]]:
     """
     Discover MCP servers across the system.
-    
+
     Args:
         search_paths: List of directories to search for MCP servers
         config_files: List of MCP configuration files to parse
         recursive: Whether to search subdirectories recursively
-        
+
     Returns:
         List of discovered MCP server configurations
     """
     import json
-    import os
     from pathlib import Path
-    
+
     servers = []
-    
+
     # Default search paths
     if search_paths is None:
         search_paths = [
+            str(Path.home() / ".gemini" / "antigravity"),
             str(Path.home() / "AppData" / "Roaming" / "Claude"),
             str(Path.home() / "AppData" / "Roaming" / "Cursor"),
             str(Path.home() / "AppData" / "Roaming" / "Windsurf"),
+            str(Path.home() / "AppData" / "Roaming" / "Zed"),
             "C:/Program Files",
             "C:/Program Files (x86)",
             str(Path.cwd()),
         ]
-    
+
     # Default config files
     if config_files is None:
         config_files = [
-            str(Path.home() / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json"),
-            str(Path.home() / "AppData" / "Roaming" / "Cursor" / "logs" / "mcp_config.json"),
+            str(Path.home() / ".gemini" / "antigravity" / "mcp_config.json"),
+            str(
+                Path.home()
+                / "AppData"
+                / "Roaming"
+                / "Claude"
+                / "claude_desktop_config.json"
+            ),
+            str(
+                Path.home()
+                / "AppData"
+                / "Roaming"
+                / "Cursor"
+                / "User"
+                / "globalStorage"
+                / "cursor-storage"
+                / "mcp_config.json"
+            ),
             str(Path.home() / "AppData" / "Roaming" / "Windsurf" / "mcp_config.json"),
+            str(Path.home() / "AppData" / "Roaming" / "Zed" / "settings.json"),
+            # Fallback for older Cursor versions
+            str(
+                Path.home()
+                / "AppData"
+                / "Roaming"
+                / "Cursor"
+                / "logs"
+                / "mcp_config.json"
+            ),
         ]
-    
+
     # Search configuration files
     for config_file in config_files:
         try:
             if Path(config_file).exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                
-                if 'mcpServers' in config:
-                    for server_name, server_config in config['mcpServers'].items():
-                        servers.append({
-                            'name': server_name,
-                            'config': server_config,
-                            'source': config_file,
-                            'type': 'config_file'
-                        })
-                        
+
+                def load_json_robust(p: Path) -> Dict[str, Any]:
+                    with open(p, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                    clean = []
+                    for line in lines:
+                        if "//" in line:
+                            line = line[: line.find("//")]
+                        clean.append(line)
+                    content = "".join(clean).strip()
+                    return json.loads(content) if content else {}
+
+                config = load_json_robust(Path(config_file))
+
+                # Handle standard mcpServers key
+                mcp_servers = config.get("mcpServers", {})
+
+                # Handle Zed-specific keys
+                if "context_servers" in config:
+                    mcp_servers.update(config["context_servers"])
+                if "mcp" in config and isinstance(config["mcp"], dict):
+                    if "servers" in config["mcp"]:
+                        mcp_servers.update(config["mcp"]["servers"])
+
+                for server_name, server_config in mcp_servers.items():
+                    servers.append(
+                        {
+                            "name": server_name,
+                            "config": server_config,
+                            "source": config_file,
+                            "type": "config_file",
+                        }
+                    )
+
         except Exception as e:
             logger.warning(f"Failed to parse config file {config_file}: {e}")
-    
+
     # Search directories for MCP servers
     for search_path in search_paths:
         try:
@@ -402,67 +447,76 @@ def discover_servers(search_paths: Optional[List[str]] = None,
                 # Look for common MCP server patterns
                 patterns = [
                     "*mcp*.py",
-                    "*mcp*.js", 
+                    "*mcp*.js",
                     "*mcp*.ts",
                     "package.json",  # Node.js MCP servers
                     "pyproject.toml",  # Python MCP servers
                     "Cargo.toml",  # Rust MCP servers
                 ]
-                
+
                 for pattern in patterns:
                     for file_path in path.rglob(pattern):
                         if file_path.is_file():
                             # Basic server detection
                             server_info = {
-                                'name': file_path.stem,
-                                'path': str(file_path),
-                                'source': search_path,
-                                'type': 'file_discovery',
-                                'config': {}
+                                "name": file_path.stem,
+                                "path": str(file_path),
+                                "source": search_path,
+                                "type": "file_discovery",
+                                "config": {},
                             }
-                            
+
                             # Try to extract more info from package files
-                            if file_path.name == 'package.json':
+                            if file_path.name == "package.json":
                                 try:
-                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                    with open(file_path, "r", encoding="utf-8") as f:
                                         package_data = json.load(f)
-                                    server_info['config'] = {
-                                        'package_name': package_data.get('name', ''),
-                                        'version': package_data.get('version', ''),
-                                        'description': package_data.get('description', ''),
-                                        'scripts': package_data.get('scripts', {})
+                                    server_info["config"] = {
+                                        "package_name": package_data.get("name", ""),
+                                        "version": package_data.get("version", ""),
+                                        "description": package_data.get(
+                                            "description", ""
+                                        ),
+                                        "scripts": package_data.get("scripts", {}),
                                     }
-                                except:
+                                except Exception:
                                     pass
-                            
-                            elif file_path.name == 'pyproject.toml':
+
+                            elif file_path.name == "pyproject.toml":
                                 try:
                                     import toml
-                                    with open(file_path, 'r', encoding='utf-8') as f:
+
+                                    with open(file_path, "r", encoding="utf-8") as f:
                                         pyproject_data = toml.load(f)
-                                    server_info['config'] = {
-                                        'package_name': pyproject_data.get('project', {}).get('name', ''),
-                                        'version': pyproject_data.get('project', {}).get('version', ''),
-                                        'description': pyproject_data.get('project', {}).get('description', ''),
+                                    server_info["config"] = {
+                                        "package_name": pyproject_data.get(
+                                            "project", {}
+                                        ).get("name", ""),
+                                        "version": pyproject_data.get(
+                                            "project", {}
+                                        ).get("version", ""),
+                                        "description": pyproject_data.get(
+                                            "project", {}
+                                        ).get("description", ""),
                                     }
-                                except:
+                                except Exception:
                                     pass
-                            
+
                             servers.append(server_info)
-                            
+
         except Exception as e:
             logger.warning(f"Failed to search path {search_path}: {e}")
-    
+
     # Remove duplicates
     unique_servers = []
     seen_names = set()
-    
+
     for server in servers:
         server_key = f"{server['name']}_{server.get('path', server.get('source', ''))}"
         if server_key not in seen_names:
             unique_servers.append(server)
             seen_names.add(server_key)
-    
+
     logger.info(f"Discovered {len(unique_servers)} MCP servers")
     return unique_servers
 
@@ -470,39 +524,36 @@ def discover_servers(search_paths: Optional[List[str]] = None,
 # Example usage
 if __name__ == "__main__":
     import logging
-    
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('tool_discovery.log')
-        ]
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler("tool_discovery.log")],
     )
-    
+
     # Example tool
     @tool(
         name="example_tool",
         description="An example MCP tool",
         version="1.0.0",
-        tags=["example", "test"]
+        tags=["example", "test"],
     )
     def example_tool(text: str, repeat: int = 1) -> str:
         """Repeat the input text the specified number of times."""
         if repeat < 0:
             raise ValueError("Repeat count must be non-negative")
         return " ".join([text] * repeat)
-    
+
     # Discover and register tools
     discover_tools(["__main__"])
-    
+
     # List all tools
-    print("\nRegistered tools:")
+    logger.info("Registered tools:")
     for tool_info in list_tools():
-        print(f"- {tool_info['name']}: {tool_info['description']}")
-    
+        logger.info(f"- {tool_info['name']}: {tool_info['description']}")
+
     # Execute a tool
-    print("\nExecuting example_tool:")
+    logger.info("Executing example_tool:")
     result = execute_tool("example_tool", "Hello", repeat=3)
-    print(f"Result: {result}")
+    logger.info(f"Result: {result}")

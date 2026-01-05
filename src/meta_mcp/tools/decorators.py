@@ -21,11 +21,12 @@ from pydantic import BaseModel, Field
 logger = structlog.get_logger(__name__)
 
 # Type variable for decorated functions
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class ToolCategory(str, Enum):
     """Predefined tool categories for organization."""
+
     DISCOVERY = "discovery"
     UTILITY = "utility"
     DEVELOPMENT = "development"
@@ -40,6 +41,7 @@ class ToolCategory(str, Enum):
 
 class ToolMetadata(BaseModel):
     """Enhanced metadata for MCP tools."""
+
     name: str = Field(..., description="Tool name")
     description: str = Field(..., description="Tool description")
     category: ToolCategory = Field(ToolCategory.UTILITY, description="Tool category")
@@ -48,11 +50,17 @@ class ToolMetadata(BaseModel):
     tags: List[str] = Field(default_factory=list, description="Tool tags")
     deprecated: bool = Field(False, description="Whether the tool is deprecated")
     experimental: bool = Field(False, description="Whether the tool is experimental")
-    examples: List[Dict[str, Any]] = Field(default_factory=list, description="Usage examples")
+    examples: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Usage examples"
+    )
 
     # Performance metadata
-    estimated_runtime: Optional[str] = Field(None, description="Estimated runtime (e.g., '< 1s', '1-5s')")
-    requires_auth: bool = Field(False, description="Whether tool requires authentication")
+    estimated_runtime: Optional[str] = Field(
+        None, description="Estimated runtime (e.g., '< 1s', '1-5s')"
+    )
+    requires_auth: bool = Field(
+        False, description="Whether tool requires authentication"
+    )
     rate_limited: bool = Field(False, description="Whether tool has rate limits")
 
     # Internal tracking
@@ -73,7 +81,7 @@ def clean_docstring(docstring: str) -> str:
     if not docstring:
         return ""
 
-    lines = docstring.strip().split('\n')
+    lines = docstring.strip().split("\n")
 
     # Remove leading/trailing empty lines
     while lines and not lines[0].strip():
@@ -85,19 +93,19 @@ def clean_docstring(docstring: str) -> str:
         return ""
 
     # Find minimum indentation (excluding first line)
-    min_indent = float('inf')
+    min_indent = float("inf")
     for line in lines[1:]:
         if line.strip():  # Skip empty lines
             indent = len(line) - len(line.lstrip())
             min_indent = min(min_indent, indent)
 
     # Remove common indentation
-    if min_indent != float('inf'):
+    if min_indent != float("inf"):
         for i in range(1, len(lines)):
             if lines[i].strip():
                 lines[i] = lines[i][min_indent:]
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def extract_parameter_info(func: Callable) -> Dict[str, Any]:
@@ -116,13 +124,13 @@ def extract_parameter_info(func: Callable) -> Dict[str, Any]:
 
     for param_name, param in sig.parameters.items():
         # Skip 'self' parameter
-        if param_name == 'self':
+        if param_name == "self":
             continue
 
         param_info = {
             "type": "string",  # Default type
             "required": param.default == inspect.Parameter.empty,
-            "description": f"Parameter: {param_name}"
+            "description": f"Parameter: {param_name}",
         }
 
         # Get type information
@@ -160,7 +168,7 @@ def _python_type_to_json_schema_type(python_type) -> str:
     }
 
     # Handle Union types (like Optional)
-    if hasattr(python_type, '__origin__'):
+    if hasattr(python_type, "__origin__"):
         if python_type.__origin__ is Union:
             # For Optional[X], return the non-None type
             non_none_types = [t for t in python_type.__args__ if t is not type(None)]
@@ -238,6 +246,7 @@ def tool(
             return a + b
         ```
     """
+
     def decorator(func: F) -> F:
         # Extract function information
         func_name = name or func.__name__
@@ -272,12 +281,15 @@ def tool(
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             return await _execute_tool_with_monitoring(func, metadata, *args, **kwargs)
+
         return async_wrapper
 
     return decorator
 
 
-async def _execute_tool_with_monitoring(func: Callable, metadata: ToolMetadata, *args, **kwargs) -> Any:
+async def _execute_tool_with_monitoring(
+    func: Callable, metadata: ToolMetadata, *args, **kwargs
+) -> Any:
     """Execute a tool with performance monitoring and error handling.
 
     Args:
@@ -298,7 +310,7 @@ async def _execute_tool_with_monitoring(func: Callable, metadata: ToolMetadata, 
         execution_id=execution_id,
         category=metadata.category,
         args_count=len(args),
-        kwargs_keys=list(kwargs.keys())
+        kwargs_keys=list(kwargs.keys()),
     )
 
     try:
@@ -316,7 +328,7 @@ async def _execute_tool_with_monitoring(func: Callable, metadata: ToolMetadata, 
             tool_name=metadata.name,
             execution_id=execution_id,
             execution_time=f"{execution_time:.3f}s",
-            success=True
+            success=True,
         )
 
         return result
@@ -331,7 +343,7 @@ async def _execute_tool_with_monitoring(func: Callable, metadata: ToolMetadata, 
             execution_time=f"{execution_time:.3f}s",
             error=str(e),
             error_type=type(e).__name__,
-            exc_info=True
+            exc_info=True,
         )
 
         # Re-raise the exception
@@ -354,6 +366,7 @@ def structured_log(level: str = "info", message: Optional[str] = None):
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         log_message = message or f"Executing {func.__name__}"
 
@@ -363,11 +376,12 @@ def structured_log(level: str = "info", message: Optional[str] = None):
                 log_message,
                 function=func.__name__,
                 args_count=len(args),
-                kwargs_keys=list(kwargs.keys())
+                kwargs_keys=list(kwargs.keys()),
             )
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -389,6 +403,7 @@ def validate_input(**field_validators):
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -402,11 +417,14 @@ def validate_input(**field_validators):
                 if field_name in bound_args.arguments:
                     value = bound_args.arguments[field_name]
                     if not validator(value):
-                        raise ValueError(f"Validation failed for parameter '{field_name}': {value}")
+                        raise ValueError(
+                            f"Validation failed for parameter '{field_name}': {value}"
+                        )
 
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -425,6 +443,7 @@ def rate_limited(calls_per_minute: int = 60):
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         calls = []
 
@@ -435,12 +454,15 @@ def rate_limited(calls_per_minute: int = 60):
             calls[:] = [call_time for call_time in calls if now - call_time < 60]
 
             if len(calls) >= calls_per_minute:
-                raise RuntimeError(f"Rate limit exceeded: {calls_per_minute} calls per minute")
+                raise RuntimeError(
+                    f"Rate limit exceeded: {calls_per_minute} calls per minute"
+                )
 
             calls.append(now)
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -460,6 +482,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -476,7 +499,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
                             tool=func.__name__,
                             attempt=attempt + 1,
                             max_retries=max_retries,
-                            error=str(e)
+                            error=str(e),
                         )
                         time.sleep(delay)
                     else:
@@ -484,13 +507,14 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
                             "Tool execution failed after all retries",
                             tool=func.__name__,
                             attempts=max_retries + 1,
-                            error=str(e)
+                            error=str(e),
                         )
 
             # Re-raise the last exception
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -509,16 +533,18 @@ def cache_result(ttl_seconds: int = 300):
             return result
         ```
     """
+
     def decorator(func: F) -> F:
         cache = {}
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Create cache key from arguments
-            cache_key = json.dumps({
-                'args': args,
-                'kwargs': sorted(kwargs.items())
-            }, sort_keys=True, default=str)
+            cache_key = json.dumps(
+                {"args": args, "kwargs": sorted(kwargs.items())},
+                sort_keys=True,
+                default=str,
+            )
 
             now = time.time()
 
@@ -540,6 +566,7 @@ def cache_result(ttl_seconds: int = 300):
             return result
 
         return wrapper
+
     return decorator
 
 
@@ -558,6 +585,7 @@ def timed(log_threshold: float = 1.0):
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -570,7 +598,7 @@ def timed(log_threshold: float = 1.0):
                     logger.info(
                         "Tool execution time",
                         tool=func.__name__,
-                        execution_time=f"{execution_time:.3f}s"
+                        execution_time=f"{execution_time:.3f}s",
                     )
 
                 return result
@@ -580,11 +608,12 @@ def timed(log_threshold: float = 1.0):
                     "Tool execution failed",
                     tool=func.__name__,
                     execution_time=f"{execution_time:.3f}s",
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -610,12 +639,13 @@ def register_tools_with_fastmcp(mcp: FastMCP, tools_module) -> None:
         attr = getattr(tools_module, attr_name)
 
         # Check if this is a tool function
-        if (callable(attr) and
-            hasattr(attr, '_mcp_is_tool') and
-            hasattr(attr, '_mcp_tool_metadata')):
-
+        if (
+            callable(attr)
+            and hasattr(attr, "_mcp_is_tool")
+            and hasattr(attr, "_mcp_tool_metadata")
+        ):
             metadata = attr._mcp_tool_metadata
-            parameters = getattr(attr, '_mcp_tool_parameters', {})
+            getattr(attr, "_mcp_tool_parameters", {})
 
             # Register with FastMCP
             mcp.tool(name=metadata.name, description=metadata.description)(attr)
@@ -626,7 +656,7 @@ def register_tools_with_fastmcp(mcp: FastMCP, tools_module) -> None:
                 category=metadata.category,
                 version=metadata.version,
                 deprecated=metadata.deprecated,
-                experimental=metadata.experimental
+                experimental=metadata.experimental,
             )
 
             registered_count += 1
@@ -634,7 +664,7 @@ def register_tools_with_fastmcp(mcp: FastMCP, tools_module) -> None:
     logger.info(
         "Tool registration completed",
         total_tools=registered_count,
-        module=tools_module.__name__
+        module=tools_module.__name__,
     )
 
 
@@ -647,7 +677,7 @@ def get_tool_metadata(func: Callable) -> Optional[ToolMetadata]:
     Returns:
         Tool metadata if function is a tool, None otherwise
     """
-    return getattr(func, '_mcp_tool_metadata', None)
+    return getattr(func, "_mcp_tool_metadata", None)
 
 
 def list_tools_in_module(module) -> List[Dict[str, Any]]:
@@ -664,25 +694,28 @@ def list_tools_in_module(module) -> List[Dict[str, Any]]:
     for attr_name in dir(module):
         attr = getattr(module, attr_name)
 
-        if (callable(attr) and
-            hasattr(attr, '_mcp_is_tool') and
-            hasattr(attr, '_mcp_tool_metadata')):
-
+        if (
+            callable(attr)
+            and hasattr(attr, "_mcp_is_tool")
+            and hasattr(attr, "_mcp_tool_metadata")
+        ):
             metadata = attr._mcp_tool_metadata
-            tools.append({
-                'function_name': attr_name,
-                'tool_name': metadata.name,
-                'description': metadata.description,
-                'category': metadata.category,
-                'version': metadata.version,
-                'author': metadata.author,
-                'tags': metadata.tags,
-                'deprecated': metadata.deprecated,
-                'experimental': metadata.experimental,
-                'usage_count': metadata.usage_count,
-                'estimated_runtime': metadata.estimated_runtime,
-                'requires_auth': metadata.requires_auth,
-                'rate_limited': metadata.rate_limited,
-            })
+            tools.append(
+                {
+                    "function_name": attr_name,
+                    "tool_name": metadata.name,
+                    "description": metadata.description,
+                    "category": metadata.category,
+                    "version": metadata.version,
+                    "author": metadata.author,
+                    "tags": metadata.tags,
+                    "deprecated": metadata.deprecated,
+                    "experimental": metadata.experimental,
+                    "usage_count": metadata.usage_count,
+                    "estimated_runtime": metadata.estimated_runtime,
+                    "requires_auth": metadata.requires_auth,
+                    "rate_limited": metadata.rate_limited,
+                }
+            )
 
     return tools

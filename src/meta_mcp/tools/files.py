@@ -1,5 +1,4 @@
 """File System Tools for MCP Studio"""
-import logging
 import os
 import shutil
 import tempfile
@@ -8,11 +7,12 @@ from typing import List
 
 import aiofiles
 import aiofiles.os
+import structlog
 from pydantic import BaseModel, Field
 
 from meta_mcp.tools import tool, structured_log, retry_on_failure
 
-logger = logging.getLogger("mcp.tools.files")
+logger = structlog.get_logger(__name__)
 
 class FileInfo(BaseModel):
     """File information model."""

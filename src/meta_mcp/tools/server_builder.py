@@ -197,7 +197,7 @@ async def status() -> str:
     Returns:
         Server status report
     """
-    return "✅ {pascal_name} is operational (SOTA Standard 2025.12)"
+    return "SUCCESS {pascal_name} is operational (SOTA Standard 2025.12)"
 
 {transport_logic}
 
@@ -273,7 +273,7 @@ def _generate_readme(server_name: str, description: str, author: str) -> str:
 
 ---
 
-## 🛠 SOTA Documentation (December 2025)
+##  SOTA Documentation (December 2025)
 
 This server was generated using the **MCP Studio SOTA Scaffolding v2.0** and follows the materialist/reductionist design patterns favored by Austrian engineering standards.
 
@@ -508,14 +508,14 @@ async def my_tool(param: str) -> str:
 ```
 
 ### SOTA Compliance Checklist
-- ✅ FastMCP 2.13.1+
-- ✅ Help tool
-- ✅ Status tool
-- ✅ Proper docstrings
-- ✅ CI/CD workflow
-- ✅ Test directory
-- ✅ Ruff linting
-- ✅ DXT packaging (manifest.json)
+- SUCCESS FastMCP 2.13.1+
+- SUCCESS Help tool
+- SUCCESS Status tool
+- SUCCESS Proper docstrings
+- SUCCESS CI/CD workflow
+- SUCCESS Test directory
+- SUCCESS Ruff linting
+- SUCCESS DXT packaging (manifest.json)
 
 ## Portmanteau Pattern
 
@@ -663,7 +663,7 @@ import sys
 def main():
     """Run development setup."""
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", ".[dev]"])
-    print("✅ Development environment setup complete!")
+    logger.info("Development environment setup complete")
 
 if __name__ == "__main__":
     main()
@@ -677,7 +677,7 @@ pytest
 echo "Running linter..."
 ruff check .
 
-echo "✅ All checks passed!"
+echo "SUCCESS All checks passed!"
 """,
     }
 

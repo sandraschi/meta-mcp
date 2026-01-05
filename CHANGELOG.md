@@ -5,15 +5,34 @@ All notable changes to Meta MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-01-05
 
 ### Added
-- **🚨 EmojiBuster Tool**: Unicode logging crash prevention and recovery
-- **📋 SOTA Validator**: FastMCP 2.14.1+ standards compliance checking
-- **🎭 Enhanced Response Patterns**: All tools implement FastMCP 2.14.1+ responses
-- **📚 Comprehensive Documentation**: PRD, updated README, standards integration
-- **🔧 Tool Registry System**: Auto-discovery and registration of MCP tools
-- **🛡️ Unicode Safety Standards**: First-ever Unicode logging crash prevention
+- **🔍 Client Integration Diagnostics**: New tool to check server health across multiple IDE clients (Antigravity, Claude, Cursor, Windsurf, Zed).
+- **📊 Runt Analyzer Enhancements**: Added Lines of Code (LoC) counting, dependency parsing, and detailed tool metadata extraction.
+
+### Changed
+- **🛡️ Project Cleanup**: Removed 15+ "zombie" server files and temporary backups to streamline the repository.
+- **🔧 Robust Configuration**: Refactored server discovery to use dynamic system paths instead of hardcoded strings.
+
+### Fixed
+- **🚨 Code Quality**: Resolved 50+ Ruff linting errors across the entire project.
+- **⚛️ JSX Syntax**: Fixed critical React/JSX template corruption in `landing_page.py` caused by f-string escaping issues.
+- **🔄 Async Hygiene**: Eliminated `RuntimeWarning` coroutine errors in diagnostic scripts.
+
+## [1.1.0] - 2026-01-04
+
+### Added
+- **🛡️ Safe Scanner Standard**: Global repository sweep refactoring 17 files and 219 instances.
+- **🚨 Hex-Based Identification**: All Unicode emojis in patterns and constants now use hex escape sequences (e.g., `\U0001F680`) to prevent grep/terminal crashes.
+- **🔍 Global Unicode Detection**: EmojiBuster now scans docstrings, return values, and logging globally.
+- **🚀 CLI Support**: `safe_scanner.py` updated to accept target paths via command line.
+
+### Changed
+- **🛡️ EmojiBuster**: Standardized on uppercase hex formatting (`\uXXXX`) for conventional SOTA compliance.
+- **📚 Documentation**: Updated README and PRD to reflect the Safe Scanner as a core SOTA requirement.
+
+## [1.0.0] - 2026-01-04
 
 ### Changed
 - **📖 README.md**: Complete rewrite with "Argh-Coding" philosophy

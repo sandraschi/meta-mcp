@@ -4,15 +4,15 @@ Data Processing and Transformation Tools for MCP Studio
 Core data processing and transformation utilities.
 """
 import json
-import logging
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union, Callable
 
+import structlog
 from pydantic import BaseModel, Field
 
 from meta_mcp.tools import tool, structured_log
 
-logger = logging.getLogger("mcp.tools.data")
+logger = structlog.get_logger(__name__)
 
 class DataFormat(str, Enum):
     """Supported data formats for conversion."""

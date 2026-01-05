@@ -1,0 +1,152 @@
+{
+  "examples": [
+    {
+      "title": "Create New MCP Server",
+      "description": "Scaffold a new SOTA-compliant MCP server from scratch",
+      "tools": [
+        "create_mcp_server"
+      ],
+      "steps": [
+        "Use create_mcp_server with server name and description",
+        "Review generated structure and files",
+        "Add custom tools using @app.tool() decorators",
+        "Test server startup and tool registration",
+        "Run smoke_test_mcp_servers to validate"
+      ]
+    },
+    {
+      "title": "Fix PowerShell Script",
+      "description": "Validate and fix PowerShell syntax errors",
+      "tools": [
+        "validate_powershell_syntax",
+        "powershell_best_practices"
+      ],
+      "steps": [
+        "Run validate_powershell_syntax on the script",
+        "Review identified issues and recommendations",
+        "Apply fixes using best practices guide",
+        "Re-validate to confirm fixes",
+        "Test script execution"
+      ]
+    },
+    {
+      "title": "Scan for Unicode Issues",
+      "description": "Find and fix Unicode logging crash risks",
+      "tools": [
+        "emojibuster_scan",
+        "emojibuster_fix"
+      ],
+      "steps": [
+        "Run emojibuster_scan on repository",
+        "Review identified Unicode characters",
+        "Run emojibuster_fix with auto_fix=True",
+        "Verify fixes don't break functionality",
+        "Check emojibuster_success_stories for metrics"
+      ]
+    },
+    {
+      "title": "Update MCP Server to SOTA",
+      "description": "Modernize existing server to FastMCP 2.14.1+ standards",
+      "tools": [
+        "get_repo_status",
+        "update_mcp_server"
+      ],
+      "steps": [
+        "Check current server status with get_repo_status",
+        "Run update_mcp_server to apply SOTA upgrades",
+        "Review changes and validate structure",
+        "Test updated server functionality",
+        "Verify tool registration works correctly"
+      ]
+    },
+    {
+      "title": "Discover All MCP Servers",
+      "description": "Find and analyze MCP servers across the system",
+      "tools": [
+        "discover_mcp_servers"
+      ],
+      "steps": [
+        "Run discover_mcp_servers to scan system",
+        "Review discovered servers and configurations",
+        "Identify servers needing updates",
+        "Check for duplicate or conflicting servers",
+        "Document server inventory"
+      ]
+    },
+    {
+      "title": "Create Fullstack Application",
+      "description": "Scaffold production-ready fullstack app",
+      "tools": [
+        "create_fullstack_app"
+      ],
+      "steps": [
+        "Use create_fullstack_app with project details",
+        "Configure AI chatbot and MCP features",
+        "Review generated structure",
+        "Test application startup",
+        "Customize for specific requirements"
+      ]
+    }
+  ],
+  "quick_commands": [
+    {
+      "command": "Create MCP server called 'my-server'",
+      "tools": ["create_mcp_server"],
+      "description": "Quick server scaffolding"
+    },
+    {
+      "command": "Validate PowerShell script",
+      "tools": ["validate_powershell_syntax"],
+      "description": "Check script for syntax errors"
+    },
+    {
+      "command": "Scan repo for Unicode issues",
+      "tools": ["emojibuster_scan"],
+      "description": "Find Unicode logging risks"
+    },
+    {
+      "command": "Discover all MCP servers",
+      "tools": ["discover_mcp_servers"],
+      "description": "Find servers across system"
+    },
+    {
+      "command": "Get PowerShell best practices",
+      "tools": ["powershell_best_practices"],
+      "description": "Learn PowerShell standards"
+    }
+  ],
+  "workflows": {
+    "new_server": [
+      "Plan server functionality and tools",
+      "Create server with create_mcp_server",
+      "Add custom tools with @app.tool() decorators",
+      "Test tool registration",
+      "Run smoke tests",
+      "Deploy and configure in MCP client"
+    ],
+    "fix_unicode": [
+      "Scan repository with emojibuster_scan",
+      "Review identified issues",
+      "Run emojibuster_fix with auto_fix=True",
+      "Test fixed code",
+      "Commit changes",
+      "Monitor for regressions"
+    ],
+    "validate_powershell": [
+      "Run validate_powershell_syntax",
+      "Review errors and warnings",
+      "Apply fixes using best practices",
+      "Re-validate script",
+      "Test script execution",
+      "Update PowerShell profile if needed"
+    ],
+    "server_analysis": [
+      "Discover servers with discover_mcp_servers",
+      "Get status with get_repo_status",
+      "Identify servers needing updates",
+      "Run analyze_runts for SOTA compliance",
+      "Update servers with update_mcp_server",
+      "Verify improvements"
+    ]
+  }
+}

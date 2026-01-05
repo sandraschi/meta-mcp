@@ -5,13 +5,13 @@ This module provides various utility tools that can be used across the MCP Studi
 """
 import asyncio
 import json
-import logging
 import random
 import string
 import time
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 import aiohttp
+import structlog
 from pydantic import BaseModel, Field
 
 from meta_mcp.tools import (
@@ -20,7 +20,7 @@ from meta_mcp.tools import (
     retry_on_failure
 )
 
-logger = logging.getLogger("mcp.tools.utility")
+logger = structlog.get_logger(__name__)
 
 T = TypeVar('T', bound=BaseModel)
 

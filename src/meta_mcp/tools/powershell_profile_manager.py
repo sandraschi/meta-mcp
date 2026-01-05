@@ -6,14 +6,13 @@ from breaking scripts and chat sessions. Sets up aliases and error handling in o
 PowerShell profile locations.
 """
 
-import asyncio
-import json
 import os
-import subprocess
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 from fastmcp import FastMCP
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 # PowerShell profile locations (obscure but effective)
 POWERSHELL_PROFILE_PATHS = [
@@ -28,7 +27,11 @@ POWERSHELL_PROFILE_PATHS = [
     # Custom MetaMCP profile location (obscure but effective)
     Path(os.path.expanduser("~/.config/powershell/MetaMCP_profile.ps1")),
     # AppData local PowerShell profile
-    Path(os.path.expanduser("~/AppData/Local/Microsoft/WindowsPowerShell/MetaMCP_profile.ps1")),
+    Path(
+        os.path.expanduser(
+            "~/AppData/Local/Microsoft/WindowsPowerShell/MetaMCP_profile.ps1"
+        )
+    ),
 ]
 
 # Linux command to PowerShell aliases
@@ -179,85 +182,91 @@ function Get-MetaMCPStatus {
 }
 """
 
+
 class PowerShellProfileManager:
     """PowerShell profile management specialist."""
-    
+
     def __init__(self):
         self.profile_paths = POWERSHELL_PROFILE_PATHS
         self.aliases = LINUX_TO_POWERSHELL_ALIASES
         self.error_handling = ERROR_HANDLING_FUNCTIONS
-    
+
     async def get_profile_path(self) -> Optional[Path]:
         """Get the best PowerShell profile path for the current user."""
-        
+
         # Try each path in order of preference
         for profile_path in self.profile_paths:
             try:
                 # Create parent directory if it doesn't exist
                 profile_path.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 # Test if we can write to this location
                 test_file = profile_path.parent / ".test_write"
-                test_file.write_text("test", encoding='utf-8')
+                test_file.write_text("test", encoding="utf-8")
                 test_file.unlink()
-                
+
                 return profile_path
-                
+
             except Exception:
                 continue
-        
+
         return None
-    
+
     async def create_profile(
         self,
         enable_aliases: bool = True,
         enable_error_handling: bool = True,
         custom_prompt: bool = True,
-        obscure_location: bool = True
+        obscure_location: bool = True,
     ) -> Dict[str, Any]:
         """Create a PowerShell profile with Linux command protection."""
-        
+
         try:
             # Get profile path
             if obscure_location:
                 # Use obscure MetaMCP-specific location
-                profile_path = Path(os.path.expanduser("~/.config/powershell/MetaMCP_profile.ps1"))
+                profile_path = Path(
+                    os.path.expanduser("~/.config/powershell/MetaMCP_profile.ps1")
+                )
             else:
                 profile_path = await self.get_profile_path()
-            
+
             if not profile_path:
                 return {
                     "success": False,
                     "error": "Could not find writable PowerShell profile location",
-                    "error_code": "NO_PROFILE_PATH"
+                    "error_code": "NO_PROFILE_PATH",
                 }
-            
+
             # Generate aliases section
             aliases_section = ""
             if enable_aliases:
                 for linux_cmd, powershell_cmd in self.aliases.items():
-                    aliases_section += f'Set-Alias -Name "{linux_cmd}" -Value "{powershell_cmd}"\n'
-            
+                    aliases_section += (
+                        f'Set-Alias -Name "{linux_cmd}" -Value "{powershell_cmd}"\n'
+                    )
+
             # Generate error handling section
             error_handling_section = ""
             if enable_error_handling:
                 for func_name, func_body in self.error_handling.items():
                     error_handling_section += f"{func_body}\n"
-            
+
             # Generate profile content
             profile_content = PROFILE_TEMPLATE.format(
-                aliases=aliases_section,
-                error_handling=error_handling_section
+                aliases=aliases_section, error_handling=error_handling_section
             )
-            
+
             # Create backup if profile exists
             if profile_path.exists():
                 backup_path = profile_path.with_suffix(profile_path.suffix + ".backup")
-                backup_path.write_text(profile_path.read_text(encoding='utf-8'), encoding='utf-8')
-            
+                backup_path.write_text(
+                    profile_path.read_text(encoding="utf-8"), encoding="utf-8"
+                )
+
             # Write new profile
-            profile_path.write_text(profile_content, encoding='utf-8')
-            
+            profile_path.write_text(profile_content, encoding="utf-8")
+
             return {
                 "success": True,
                 "operation": "create_powershell_profile",
@@ -271,10 +280,10 @@ class PowerShellProfileManager:
                 "recommendations": [
                     "Restart PowerShell to load the profile",
                     "Test Linux commands to verify aliases work",
-                    "Check profile status with Get-MetaMCPStatus"
-                ]
+                    "Check profile status with Get-MetaMCPStatus",
+                ],
             }
-            
+
         except Exception as e:
             return {
                 "success": False,
@@ -283,46 +292,46 @@ class PowerShellProfileManager:
                 "recovery_options": [
                     "Check PowerShell profile directory permissions",
                     "Run PowerShell as Administrator",
-                    "Use manual profile creation"
-                ]
+                    "Use manual profile creation",
+                ],
             }
-    
+
     async def check_profile_status(self) -> Dict[str, Any]:
         """Check the status of PowerShell profiles."""
-        
+
         try:
             profile_status = []
             active_profile = None
-            
+
             for profile_path in self.profile_paths:
                 status = {
                     "path": str(profile_path),
                     "exists": profile_path.exists(),
                     "writable": False,
                     "has_metamcp": False,
-                    "aliases_count": 0
+                    "aliases_count": 0,
                 }
-                
+
                 if profile_path.exists():
                     try:
-                        content = profile_path.read_text(encoding='utf-8')
+                        content = profile_path.read_text(encoding="utf-8")
                         status["has_metamcp"] = "MetaMCP" in content
                         status["aliases_count"] = content.count("Set-Alias")
-                        
+
                         # Test writability
                         test_file = profile_path.parent / ".test_write"
-                        test_file.write_text("test", encoding='utf-8')
+                        test_file.write_text("test", encoding="utf-8")
                         test_file.unlink()
                         status["writable"] = True
-                        
+
                         if status["has_metamcp"]:
                             active_profile = str(profile_path)
-                            
+
                     except Exception:
                         pass
-                
+
                 profile_status.append(status)
-            
+
             return {
                 "success": True,
                 "operation": "check_profile_status",
@@ -332,20 +341,22 @@ class PowerShellProfileManager:
                 "recommendations": [
                     "Create MetaMCP profile if none found",
                     "Verify profile is loaded in PowerShell",
-                    "Test Linux command aliases"
-                ]
+                    "Test Linux command aliases",
+                ],
             }
-            
+
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Failed to check profile status: {str(e)}",
-                "error_code": "STATUS_CHECK_FAILED"
+                "error_code": "STATUS_CHECK_FAILED",
             }
-    
-    async def remove_profile(self, profile_path: Optional[str] = None) -> Dict[str, Any]:
+
+    async def remove_profile(
+        self, profile_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Remove MetaMCP PowerShell profile."""
-        
+
         try:
             if profile_path:
                 target_path = Path(profile_path)
@@ -359,23 +370,27 @@ class PowerShellProfileManager:
                     return {
                         "success": False,
                         "error": "No MetaMCP profile found to remove",
-                        "error_code": "NO_PROFILE_FOUND"
+                        "error_code": "NO_PROFILE_FOUND",
                     }
-            
+
             if not target_path.exists():
                 return {
                     "success": False,
                     "error": f"Profile not found: {target_path}",
-                    "error_code": "PROFILE_NOT_FOUND"
+                    "error_code": "PROFILE_NOT_FOUND",
                 }
-            
+
             # Create backup before removal
-            backup_path = target_path.with_suffix(target_path.suffix + ".removal_backup")
-            backup_path.write_text(target_path.read_text(encoding='utf-8'), encoding='utf-8')
-            
+            backup_path = target_path.with_suffix(
+                target_path.suffix + ".removal_backup"
+            )
+            backup_path.write_text(
+                target_path.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+
             # Remove profile
             target_path.unlink()
-            
+
             return {
                 "success": True,
                 "operation": "remove_powershell_profile",
@@ -385,75 +400,75 @@ class PowerShellProfileManager:
                 "recommendations": [
                     "Restart PowerShell to unload the profile",
                     "Restore from backup if needed",
-                    "Create new profile with different settings"
-                ]
+                    "Create new profile with different settings",
+                ],
             }
-            
+
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Failed to remove PowerShell profile: {str(e)}",
-                "error_code": "PROFILE_REMOVAL_FAILED"
+                "error_code": "PROFILE_REMOVAL_FAILED",
             }
 
 
 def register_powershell_profile_tools(app: FastMCP):
     """Register PowerShell profile management tools with enhanced response patterns."""
-    
+
     @app.tool()
     async def create_powershell_profile(
         enable_aliases: bool = True,
         enable_error_handling: bool = True,
         custom_prompt: bool = True,
-        obscure_location: bool = True
+        obscure_location: bool = True,
     ) -> Dict[str, Any]:
         """Create PowerShell profile with Linux command protection.
-        
+
         Creates a PowerShell profile that prevents Linux command errors from breaking
         scripts and chat sessions. Sets up aliases and error handling in obscure
         PowerShell profile locations.
-        
+
         Args:
             enable_aliases: Enable Linux command aliases
             enable_error_handling: Enable error handling for unsupported commands
             custom_prompt: Use custom MetaMCP prompt
             obscure_location: Use obscure profile location
-            
+
         Returns:
             Enhanced response with profile creation results
         """
-        
+
         try:
             manager = PowerShellProfileManager()
             result = await manager.create_profile(
                 enable_aliases=enable_aliases,
                 enable_error_handling=enable_error_handling,
                 custom_prompt=custom_prompt,
-                obscure_location=obscure_location
+                obscure_location=obscure_location,
             )
-            
+
             if result.get("success"):
                 return {
                     "success": True,
                     "operation": "create_powershell_profile",
                     "result": result,
-                    "summary": f"Created PowerShell profile with {manager.aliases.Count} Linux command aliases",
+                    "summary": f"Created PowerShell profile with {len(manager.aliases)} Linux command aliases",
                     "recommendations": [
                         "Restart PowerShell to load the profile",
                         "Test Linux commands: ls, grep, cat, etc.",
                         "Check profile status with check_powershell_profile_status()",
-                        "Use Get-MetaMCPStatus to verify profile is active"
+                        "Use Get-MetaMCPStatus to verify profile is active",
                     ],
                     "next_steps": [
                         "Close and reopen PowerShell",
                         "Test: ls -la (should work now)",
                         "Test: grep pattern file (should work now)",
-                        "Test: sudo command (should show helpful error)"
-                    ]
+                        "Test: sudo command (should show helpful error)",
+                    ],
                 }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "success": False,
@@ -462,22 +477,22 @@ def register_powershell_profile_tools(app: FastMCP):
                 "recovery_options": [
                     "Run PowerShell as Administrator",
                     "Check profile directory permissions",
-                    "Use manual profile creation"
-                ]
+                    "Use manual profile creation",
+                ],
             }
-    
+
     @app.tool()
     async def check_powershell_profile_status() -> Dict[str, Any]:
         """Check PowerShell profile status and configuration.
-        
+
         Returns:
             Enhanced response with profile status information
         """
-        
+
         try:
             manager = PowerShellProfileManager()
             result = await manager.check_profile_status()
-            
+
             if result.get("success"):
                 return {
                     "success": True,
@@ -487,41 +502,41 @@ def register_powershell_profile_tools(app: FastMCP):
                     "recommendations": [
                         "Create MetaMCP profile if none found",
                         "Verify profile is loaded in PowerShell",
-                        "Test Linux command aliases"
+                        "Test Linux command aliases",
                     ],
                     "next_steps": [
                         "Run Get-MetaMCPStatus in PowerShell",
                         "Test Linux commands to verify aliases",
-                        "Create profile if needed with create_powershell_profile()"
-                    ]
+                        "Create profile if needed with create_powershell_profile()",
+                    ],
                 }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "success": False,
                 "error": f"Profile status check failed: {str(e)}",
-                "error_code": "STATUS_CHECK_ERROR"
+                "error_code": "STATUS_CHECK_ERROR",
             }
-    
+
     @app.tool()
     async def remove_powershell_profile(
-        profile_path: Optional[str] = None
+        profile_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Remove MetaMCP PowerShell profile.
-        
+
         Args:
             profile_path: Specific profile path to remove (auto-detected if None)
-            
+
         Returns:
             Enhanced response with profile removal results
         """
-        
+
         try:
             manager = PowerShellProfileManager()
             result = await manager.remove_profile(profile_path)
-            
+
             if result.get("success"):
                 return {
                     "success": True,
@@ -531,17 +546,17 @@ def register_powershell_profile_tools(app: FastMCP):
                     "recommendations": [
                         "Restart PowerShell to unload the profile",
                         "Restore from backup if needed",
-                        "Create new profile with different settings"
+                        "Create new profile with different settings",
                     ],
                     "next_steps": [
                         "Close and reopen PowerShell",
                         "Verify Linux commands no longer work as aliases",
-                        "Create new profile if needed"
-                    ]
+                        "Create new profile if needed",
+                    ],
                 }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "success": False,
@@ -550,17 +565,21 @@ def register_powershell_profile_tools(app: FastMCP):
                 "recovery_options": [
                     "Check profile path permissions",
                     "Run PowerShell as Administrator",
-                    "Manual profile removal"
-                ]
+                    "Manual profile removal",
+                ],
             }
 
 
 def register_powershell_tools(app: FastMCP):
     """Register all PowerShell tools with SOTA compliance."""
-    
-    logger.info("Registering PowerShell profile tools with SOTA FastMCP 2.14.1+ compliance")
-    
+
+    logger.info(
+        "Registering PowerShell profile tools with SOTA FastMCP 2.14.1+ compliance"
+    )
+
     # Register PowerShell profile tools
     register_powershell_profile_tools(app)
-    
-    logger.info("PowerShell profile tools registration complete - Enhanced response patterns enabled")
+
+    logger.info(
+        "PowerShell profile tools registration complete - Enhanced response patterns enabled"
+    )

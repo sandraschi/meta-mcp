@@ -40,9 +40,9 @@ def format_scan_result_markdown(result: Dict[str, Any]) -> str:
     # Runts
     runts = result.get("runts", [])
     if runts:
-        md.append("## 🐛 Runts (Need Upgrades)\n")
+        md.append("##  Runts (Need Upgrades)\n")
         for runt in runts:
-            md.append(f"### {runt.get('status_emoji', '🐛')} {runt.get('name', 'Unknown')}")
+            md.append(f"### {runt.get('status_emoji', '')} {runt.get('name', 'Unknown')}")
             md.append(f"**Status:** {runt.get('status_label', 'Unknown')}")
             md.append(f"**SOTA Score:** {runt.get('sota_score', 0)}/100")
             md.append(f"**FastMCP Version:** {runt.get('fastmcp_version', 'Unknown')}")
@@ -68,9 +68,9 @@ def format_scan_result_markdown(result: Dict[str, Any]) -> str:
     # SOTA Repos
     sota_repos = result.get("sota_repos", [])
     if sota_repos:
-        md.append("## ✅ SOTA Repositories\n")
+        md.append("## SUCCESS SOTA Repositories\n")
         for repo in sota_repos:
-            md.append(f"### {repo.get('status_emoji', '✅')} {repo.get('name', 'Unknown')}")
+            md.append(f"### {repo.get('status_emoji', 'SUCCESS')} {repo.get('name', 'Unknown')}")
             md.append(f"**Status:** {repo.get('status_label', 'SOTA')}")
             md.append(f"**SOTA Score:** {repo.get('sota_score', 100)}/100")
             md.append(f"**FastMCP Version:** {repo.get('fastmcp_version', 'Unknown')}")
@@ -99,7 +99,7 @@ def format_repo_status_markdown(result: Dict[str, Any]) -> str:
     
     # Status Overview
     md.append("## Status Overview\n")
-    md.append(f"**Status:** {result.get('status_emoji', '✅')} {result.get('status_label', 'Unknown')}")
+    md.append(f"**Status:** {result.get('status_emoji', 'SUCCESS')} {result.get('status_label', 'Unknown')}")
     md.append(f"**SOTA Score:** {result.get('sota_score', 0)}/100")
     md.append(f"**Upgrade Priority:** {result.get('upgrade_priority', 'N/A')}")
     md.append(f"**Path:** `{result.get('path', 'N/A')}`")
@@ -118,7 +118,7 @@ def format_repo_status_markdown(result: Dict[str, Any]) -> str:
     if reasons:
         md.append("## Issues\n")
         for reason in reasons:
-            md.append(f"- ❌ {reason}")
+            md.append(f"- ERROR {reason}")
         md.append("")
     
     # Recommendations
@@ -126,7 +126,7 @@ def format_repo_status_markdown(result: Dict[str, Any]) -> str:
     if recommendations:
         md.append("## Recommendations\n")
         for rec in recommendations:
-            md.append(f"- 💡 {rec}")
+            md.append(f"- Idea {rec}")
         md.append("")
     
     # Detailed Information

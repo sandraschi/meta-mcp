@@ -116,7 +116,7 @@ async def delete_mcp_server(
             safety_checks["remote_url"] = remote
             
             if remote:
-                warnings.append(f"⚠️ Repository has remote: {remote}")
+                warnings.append(f"WARNING Repository has remote: {remote}")
                 if not force:
                     return {
                         "success": False,
@@ -126,7 +126,7 @@ async def delete_mcp_server(
                     }
             
             if has_uncommitted:
-                warnings.append("⚠️ Repository has uncommitted changes")
+                warnings.append("WARNING Repository has uncommitted changes")
         
         # Check if it's in a common repos directory (safer to delete)
         path_str = str(path).lower()
@@ -139,7 +139,7 @@ async def delete_mcp_server(
         safety_checks["is_in_repos_directory"] = is_in_repos
         
         if not is_in_repos and not force:
-            warnings.append("⚠️ Repository is not in a standard repos directory")
+            warnings.append("WARNING Repository is not in a standard repos directory")
         
         # Create backup if requested
         backup_path = None
@@ -153,7 +153,7 @@ async def delete_mcp_server(
                 backup_path = str(backup_dir)
                 logger.info(f"Created backup: {backup_path}")
             except Exception as e:
-                warnings.append(f"⚠️ Failed to create backup: {e}")
+                warnings.append(f"WARNING Failed to create backup: {e}")
         
         # Perform deletion
         if dry_run:

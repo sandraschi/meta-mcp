@@ -801,7 +801,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         
         <div style="text-align: center; margin-top: 2rem;">
-            <p style="color: var(--text-muted);">Current Version: v1.0.0-alpha • <a href="{github_url}/releases" style="color: var(--primary-glow);">View Changelog</a></p>
+            <p style="color: var(--text-muted);">Current Version: v1.0.0-alpha  <a href="{github_url}/releases" style="color: var(--primary-glow);">View Changelog</a></p>
         </div>
     </div>
     """

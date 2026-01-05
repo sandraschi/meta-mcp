@@ -167,7 +167,7 @@ app = FastMCP("{pascal_name}")
 @app.tool()
 async def status() -> str:
     """Get server status."""
-    return "✅ {pascal_name} is operational"
+    return "SUCCESS {pascal_name} is operational"
 
 {transport_logic}
 

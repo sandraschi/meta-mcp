@@ -1,0 +1,32 @@
+# Python Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# Linting/Testing Caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Backups and Temp Files
+*.backup
+*.backup-*
+*.tmp
+.backup-test-*
+.backup-rules.md
+
+# IDEs
+.vscode/
+.idea/
+.windsurf/
+.cursor/
+
+# OS Files
+.DS_Store
+Thumbs.db

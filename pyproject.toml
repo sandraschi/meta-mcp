@@ -6,7 +6,7 @@ authors = [
     { name = "Sandra Schipal", email = "sandraschi@gmail.com" }
 ]
 dependencies = [
-    "fastmcp",
+    "fastmcp>=2.14.1",
     "fastapi",
     "uvicorn",
     "jinja2",
@@ -17,7 +17,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 [project.scripts]
-meta-mcp = "meta_mcp.mcp_server:main"
+meta-mcp = "meta_mcp.main:main"
 meta-mcp-server = "meta_mcp.mcp_server:main"
 
 [build-system]

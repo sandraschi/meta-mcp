@@ -12,9 +12,10 @@ from .services.sota import SOTAService
 from .tools.builder import ServerBuilder
 from .tools.landing_page import LandingPageBuilder
 from .tools.fullstack import FullstackAppBuilder
+from .tools.webshop import WebshopBuilder
 
 
-class MakerMCP:
+class MetaMCP:
     """
     The main engine for MCP discovery, management, and analysis.
     """
@@ -27,6 +28,7 @@ class MakerMCP:
         self.builder = ServerBuilder()
         self.landing_page = LandingPageBuilder()
         self.fullstack = FullstackAppBuilder()
+        self.webshop = WebshopBuilder()
 
         self._logger = logging.getLogger(__name__)
 

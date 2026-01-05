@@ -150,14 +150,14 @@ async def status(level: str = "basic", focus: str | None = None) -> str:
     if level == "basic":
         return """# Server Status
 
-**Status:** ✅ Running
+**Status:** SUCCESS Running
 **FastMCP:** 2.13.1
 """
     elif level == "intermediate":
         return """# Server Status - Detailed
 
 ## Server Information
-- **Status:** ✅ Running
+- **Status:** SUCCESS Running
 - **FastMCP:** 2.13.1
 
 ## Tools
@@ -168,12 +168,12 @@ Use help tool to see all available tools.
 
 ## System Information
 - FastMCP: 2.13.1
-- Status: ✅ Running
+- Status: SUCCESS Running
 
 ## Compliance
-- ✅ FastMCP 2.13.1
-- ✅ Help tool
-- ✅ Status tool
+- SUCCESS FastMCP 2.13.1
+- SUCCESS Help tool
+- SUCCESS Status tool
 """
 '''
     

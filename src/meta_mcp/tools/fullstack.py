@@ -27,20 +27,26 @@ from .decorators import ToolCategory, tool
 async def create_fullstack_app_tool(
     name: str,
     description: str = "A modern fullstack application",
+    author: str = "Developer",
     target_path: str = "./apps",
     include_ai: bool = True,
     include_mcp: bool = True,
     include_mcp_server: bool = True,
+    include_pwa: bool = True,
+    include_monitoring: bool = True,
 ) -> Dict[str, Any]:
     """Scaffold a new fullstack application."""
     builder = FullstackAppBuilder()
     return await builder.create_app(
         app_name=name,
         description=description,
+        author=author,
         output_path=target_path,
         include_ai=include_ai,
         include_mcp=include_mcp,
         include_mcp_server=include_mcp_server,
+        include_pwa=include_pwa,
+        include_monitoring=include_monitoring,
     )
 
 
