@@ -1,3 +1,0 @@
-[console_scripts]
-meta-mcp = meta_mcp.mcp_server:main
-meta-mcp-server = meta_mcp.mcp_server:main

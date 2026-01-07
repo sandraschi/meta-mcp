@@ -1,6 +1,0 @@
-fastmcp
-fastapi
-uvicorn
-jinja2
-pydantic-settings
-python-multipart

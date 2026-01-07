@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: meta_mcp
+Version: 0.2.1b0
+Summary: MetaMCP - The Ultimate 'Argh-Coding' Bloat-Buster - Comprehensive MCP server management platform
+Author-email: Sandra Schipal <sandraschi@gmail.com>
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: fastmcp>=2.14.1
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: jinja2
+Requires-Dist: pydantic-settings
+Requires-Dist: python-multipart
