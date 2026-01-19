@@ -107,6 +107,141 @@ SUCCESS_SIGNATURES = [
     description="Check if an MCP server is configured and starting in IDE clients.",
     tags=["diagnostics", "client", "integration"],
 )
+async def discover_clients() -> List[Dict[str, Any]]:
+    """
+    Discover installed MCP client applications on the system.
+
+    Returns:
+        List of discovered client applications with installation status
+    """
+    import shutil
+    import subprocess
+
+    discovered_clients = []
+
+    # Client discovery paths and executables
+    CLIENT_DISCOVERY = {
+        "cursor": {
+            "name": "Cursor",
+            "paths": [
+                r"C:\Users\{username}\AppData\Local\Programs\cursor\Cursor.exe",
+                r"C:\Program Files\Cursor\Cursor.exe",
+                r"C:\Program Files (x86)\Cursor\Cursor.exe",
+            ],
+            "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Cursor",
+            "config_path": Path.home() / "AppData" / "Roaming" / "Cursor" / "User" / "globalStorage" / "cursor-storage" / "mcp_config.json",
+        },
+        "windsurf": {
+            "name": "Windsurf",
+            "paths": [
+                r"C:\Users\{username}\AppData\Local\Programs\windsurf\Windsurf.exe",
+                r"C:\Program Files\Windsurf\Windsurf.exe",
+                r"C:\Program Files (x86)\Windsurf\Windsurf.exe",
+            ],
+            "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Windsurf",
+            "config_path": Path.home() / "AppData" / "Roaming" / "Windsurf" / "mcp_config.json",
+        },
+        "zed": {
+            "name": "Zed",
+            "paths": [
+                r"C:\Users\{username}\AppData\Local\Zed\Zed.exe",
+                r"C:\Program Files\Zed\Zed.exe",
+                r"C:\Program Files (x86)\Zed\Zed.exe",
+            ],
+            "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Zed",
+            "config_path": Path.home() / "AppData" / "Roaming" / "Zed" / "settings.json",
+        },
+        "antigravity": {
+            "name": "Antigravity IDE",
+            "paths": [
+                r"C:\Users\{username}\.gemini\antigravity\antigravity.exe",
+                r"C:\Program Files\Gemini\Antigravity\antigravity.exe",
+            ],
+            "config_path": Path.home() / ".gemini" / "antigravity" / "mcp_config.json",
+        },
+        "claude": {
+            "name": "Claude Desktop",
+            "paths": [
+                r"C:\Users\{username}\AppData\Local\AnthropicClaude\claude.exe",
+                r"C:\Program Files\Anthropic\Claude\claude.exe",
+            ],
+            "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Claude",
+            "config_path": Path.home() / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json",
+        },
+        "vscode": {
+            "name": "VS Code",
+            "paths": [
+                r"C:\Users\{username}\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+                r"C:\Program Files\Microsoft VS Code\Code.exe",
+                r"C:\Program Files (x86)\Microsoft VS Code\Code.exe",
+            ],
+            "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{771FD6B0-FA20-440A-A002-3B3BAC16DC50}_is1",
+            "config_path": Path.home() / "AppData" / "Roaming" / "Code" / "User" / "settings.json",
+        },
+    }
+
+    for client_id, client_info in CLIENT_DISCOVERY.items():
+        client_status = {
+            "id": client_id,
+            "name": client_info["name"],
+            "installed": False,
+            "executable_path": None,
+            "config_exists": False,
+            "mcp_configured": False,
+            "version": None,
+            "status": "not_found",
+        }
+
+        # Check if client is installed by looking for executables
+        username = Path.home().name
+        for path_template in client_info["paths"]:
+            path = path_template.format(username=username)
+            if Path(path).exists():
+                client_status["installed"] = True
+                client_status["executable_path"] = path
+                client_status["status"] = "installed"
+                break
+
+        # Also check Windows registry for installation
+        if not client_status["installed"] and "registry_key" in client_info:
+            try:
+                import winreg
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, client_info["registry_key"])
+                client_status["installed"] = True
+                client_status["status"] = "installed"
+                winreg.CloseKey(key)
+            except:
+                pass
+
+        # Check configuration
+        config_path = client_info["config_path"]
+        if config_path.exists():
+            client_status["config_exists"] = True
+
+            # Check if MCP is configured
+            try:
+                config = load_json_with_comments(config_path)
+                has_mcp = False
+
+                if client_id == "zed":
+                    has_mcp = "context_servers" in config or ("mcp" in config and "servers" in config["mcp"])
+                elif client_id == "vscode":
+                    has_mcp = "mcp" in config and "servers" in config["mcp"]
+                else:
+                    has_mcp = "mcpServers" in config
+
+                if has_mcp:
+                    client_status["mcp_configured"] = True
+                    client_status["status"] = "configured"
+
+            except Exception:
+                pass
+
+        discovered_clients.append(client_status)
+
+    return discovered_clients
+
+
 async def check_client_integration(server_name: str) -> Dict[str, Any]:
     """
     Check if a specific MCP server is integrated with known IDE clients.

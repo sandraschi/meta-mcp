@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 from meta_mcp.services.base import MetaMCPService
 from meta_mcp.tools.discovery import discover_servers
-from meta_mcp.tools.client_integration import check_client_integration
+from meta_mcp.tools.client_integration import check_client_integration, discover_clients
 
 
 class DiscoveryService(MetaMCPService):
@@ -48,8 +48,35 @@ class DiscoveryService(MetaMCPService):
         """Check client integration status."""
         try:
             if operation == "check":
-                # This operation can take some time, but should be bounded
-                # The client_integration.py does the heavy lifting
+                # Discover all installed clients
+                discovered_clients = await discover_clients()
+
+                # Convert to the expected format for compatibility
+                clients_dict = {}
+                for client in discovered_clients:
+                    clients_dict[client["id"]] = {
+                        "name": client["name"],
+                        "status": client["status"],
+                        "installed": client["installed"],
+                        "config_exists": client["config_exists"],
+                        "mcp_configured": client["mcp_configured"],
+                        "executable_path": client["executable_path"],
+                        "config_path": str(client.get("config_path", "")),
+                        "version": client.get("version"),
+                        "servers": [],  # Will be populated if MCP is configured
+                        "error": None,
+                    }
+
+                    # If MCP is configured, try to get server list
+                    if client["mcp_configured"]:
+                        try:
+                            # This would need the server_name parameter to check specific server
+                            # For now, just mark as configured
+                            pass
+                        except Exception:
+                            pass
+
+                return self.create_response(True, f"Discovered {len(discovered_clients)} MCP clients", clients_dict)
                 # Check all clients or specific client
                 clients_to_check = [
                     "claude",

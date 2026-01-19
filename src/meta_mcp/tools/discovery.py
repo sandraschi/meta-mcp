@@ -351,7 +351,7 @@ def discover_servers(
 
     servers = []
 
-    # Default search paths
+    # Default search paths - only check reasonable locations to avoid hanging
     if search_paths is None:
         search_paths = [
             str(Path.home() / ".gemini" / "antigravity"),
@@ -359,9 +359,7 @@ def discover_servers(
             str(Path.home() / "AppData" / "Roaming" / "Cursor"),
             str(Path.home() / "AppData" / "Roaming" / "Windsurf"),
             str(Path.home() / "AppData" / "Roaming" / "Zed"),
-            "C:/Program Files",
-            "C:/Program Files (x86)",
-            str(Path.cwd()),
+            str(Path.cwd()),  # Current working directory only
         ]
 
     # Default config files
@@ -439,12 +437,18 @@ def discover_servers(
         except Exception as e:
             logger.warning(f"Failed to parse config file {config_file}: {e}")
 
-    # Search directories for MCP servers
+    # Search directories for MCP servers (limited to avoid hanging)
+    servers_found = 0
+    max_servers = 50  # Limit to prevent excessive scanning
+
     for search_path in search_paths:
+        if servers_found >= max_servers:
+            break
+
         try:
             path = Path(search_path)
-            if path.exists():
-                # Look for common MCP server patterns
+            if path.exists() and path.is_dir():
+                # Look for common MCP server patterns (non-recursive for speed)
                 patterns = [
                     "*mcp*.py",
                     "*mcp*.js",
@@ -455,7 +459,14 @@ def discover_servers(
                 ]
 
                 for pattern in patterns:
-                    for file_path in path.rglob(pattern):
+                    if servers_found >= max_servers:
+                        break
+
+                    # Use glob instead of rglob to avoid deep recursion
+                    for file_path in path.glob(pattern):
+                        if servers_found >= max_servers:
+                            break
+
                         if file_path.is_file():
                             # Basic server detection
                             server_info = {
@@ -503,6 +514,7 @@ def discover_servers(
                                     pass
 
                             servers.append(server_info)
+                            servers_found += 1
 
         except Exception as e:
             logger.warning(f"Failed to search path {search_path}: {e}")

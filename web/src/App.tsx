@@ -431,11 +431,11 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center space-x-3">
                                         <div className={`w-3 h-3 rounded-full ${
-                                            clientData?.status === 'connected' ? 'bg-green-500' :
-                                            clientData?.status === 'configured' ? 'bg-blue-500' :
+                                            clientData?.status === 'configured' ? 'bg-green-500' :
+                                            clientData?.installed ? 'bg-blue-500' :
                                             clientData?.error ? 'bg-red-500' : 'bg-gray-500'
                                         }`}></div>
-                                        <h3 className="text-lg font-semibold text-white capitalize">{clientName}</h3>
+                                        <h3 className="text-lg font-semibold text-white">{clientData?.name || clientName}</h3>
                                     </div>
                                     <Eye className="w-5 h-5 text-slate-400" />
                                 </div>
@@ -444,11 +444,40 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                                     <div className="flex justify-between items-center">
                                         <span className="text-slate-400">Status:</span>
                                         <span className={`text-sm px-2 py-1 rounded ${
-                                            clientData?.status === 'connected' ? 'bg-green-500/20 text-green-400' :
-                                            clientData?.status === 'configured' ? 'bg-blue-500/20 text-blue-400' :
+                                            clientData?.status === 'configured' ? 'bg-green-500/20 text-green-400' :
+                                            clientData?.installed ? 'bg-blue-500/20 text-blue-400' :
                                             clientData?.error ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
                                         }`}>
                                             {clientData?.status || 'unknown'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-400">Installed:</span>
+                                        <span className={`text-sm px-2 py-1 rounded ${
+                                            clientData?.installed ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                        }`}>
+                                            {clientData?.installed ? 'Yes' : 'No'}
+                                        </span>
+                                    </div>
+
+                                    {clientData?.executable_path && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-400">Executable:</span>
+                                            <span className="text-slate-300 text-sm truncate max-w-48" title={clientData.executable_path}>
+                                                {clientData.executable_path.split(/[/\\]/).pop()}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-400">MCP Config:</span>
+                                        <span className={`text-sm px-2 py-1 rounded ${
+                                            clientData?.mcp_configured ? 'bg-green-500/20 text-green-400' :
+                                            clientData?.config_exists ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
+                                        }`}>
+                                            {clientData?.mcp_configured ? 'Configured' :
+                                             clientData?.config_exists ? 'Exists' : 'None'}
                                         </span>
                                     </div>
 
@@ -456,15 +485,6 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                                         <div className="flex justify-between items-center">
                                             <span className="text-slate-400">Version:</span>
                                             <span className="text-white text-sm">{clientData.version}</span>
-                                        </div>
-                                    )}
-
-                                    {clientData?.config_path && (
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-400">Config:</span>
-                                            <span className="text-slate-300 text-sm truncate max-w-32" title={clientData.config_path}>
-                                                {clientData.config_path.split(/[/\\]/).pop()}
-                                            </span>
                                         </div>
                                     )}
 
@@ -509,8 +529,8 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                     <Eye size={48} className="mx-auto mb-4 text-slate-600" />
                     <h3 className="text-xl font-semibold text-white mb-2">No Client Data Available</h3>
                     <p className="text-slate-400 mb-6">
-                        Click "Check Clients" to scan for MCP client configurations across your system.
-                        This will check common IDEs like Claude Desktop, Cursor, Windsurf, Zed, and Antigravity.
+                        Click "Check Clients" to discover installed MCP client applications and check their MCP configurations.
+                        This will scan for Cursor, Windsurf, Zed, Antigravity, Claude Desktop, and VS Code installations.
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-slate-500">
                         <div className="flex flex-col items-center">
@@ -579,29 +599,22 @@ function App() {
             setLoading(true)
             setError(null)
 
-            // Load health status
+            // Load health status - this is fast
             const healthResponse = await api.getDetailedHealth()
             if (isSuccessResponse(healthResponse)) {
                 setHealthStatus(healthResponse.data)
             }
 
-            // Load tools
+            // Load tools - this is fast
             const toolsResponse = await api.listTools()
             if (isSuccessResponse(toolsResponse)) {
                 setTools(toolsResponse.data)
             }
 
-            // Load servers
-            const serversResponse = await api.discoverServers({ operation: 'scan' })
-            if (isSuccessResponse(serversResponse)) {
-                setServers(serversResponse.data || [])
-            }
-
-            // Load client integration status
-            const clientsResponse = await api.checkClientIntegration({ operation: 'check' })
-            if (isSuccessResponse(clientsResponse)) {
-                setClients(clientsResponse.data || {})
-            }
+            // Skip expensive discovery operations on startup
+            // These will be loaded when users navigate to specific pages
+            setServers([])
+            setClients({})
 
             // Create some notifications from health status
             const newNotifications: any[] = []
@@ -644,9 +657,9 @@ function App() {
             failed: 0
         },
         clients: {
-            configured: clients ? Object.keys(clients).length : 0,
-            connected: clients ? Object.values(clients).filter((c: any) => c?.status === 'connected').length : 0,
-            total: 5 // Standard clients: claude, cursor, windsurf, zed, antigravity
+            configured: clients ? Object.values(clients).filter((c: any) => c?.mcp_configured).length : 0,
+            connected: clients ? Object.values(clients).filter((c: any) => c?.status === 'configured').length : 0,
+            total: clients ? Object.keys(clients).length : 5 // Total discovered clients
         },
         security: {
             score: healthStatus ? (Object.values(healthStatus).every(s => s.healthy) ? 98 : 75) : 0,
