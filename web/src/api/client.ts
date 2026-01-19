@@ -148,6 +148,14 @@ export const api = {
     }): Promise<ApiResponse> {
         return apiClient.post('/api/v1/scaffolding/create', params);
     },
+
+    // Repository analysis tools
+    async scanRepository(params: {
+        repo_path: string;
+        deep_analysis?: boolean;
+    }): Promise<ApiResponse> {
+        return apiClient.post('/api/v1/repos/scan', params);
+    },
 };
 
 // Utility functions

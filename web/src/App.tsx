@@ -3,7 +3,8 @@ import {
     Activity, Zap, Server, ShieldCheck, BarChart3, Settings, Menu,
     CheckCircle, Database, Cpu, Search, Bell, ChevronDown, Home, Code,
     TrendingUp, RefreshCw, Plus, ChevronLeft, ChevronRight, AlertTriangle,
-    FileText, Eye, RotateCcw, Download, Terminal, Play
+    FileText, Eye, RotateCcw, Download, Terminal, Play, Loader, Folder,
+    XCircle
 } from 'lucide-react'
 import { api, isSuccessResponse, getErrorMessage } from './api/client'
 
@@ -32,6 +33,497 @@ interface HealthStatus {
     analysis: { healthy: boolean; status: string };
     discovery: { healthy: boolean; status: string };
     scaffolding: { healthy: boolean; status: string };
+}
+
+// Repository Analysis Page Component
+function RepositoryAnalysisPage() {
+    const [repoPath, setRepoPath] = useState('')
+    const [deepAnalysis, setDeepAnalysis] = useState(false)
+    const [analyzing, setAnalyzing] = useState(false)
+    const [analysisResult, setAnalysisResult] = useState<any>(null)
+    const [error, setError] = useState<string | null>(null)
+
+    const handleAnalyze = async () => {
+        if (!repoPath.trim()) {
+            setError('Please enter a repository path')
+            return
+        }
+
+        setAnalyzing(true)
+        setError(null)
+        setAnalysisResult(null)
+
+        try {
+            const response = await api.scanRepository({
+                repo_path: repoPath.trim(),
+                deep_analysis: deepAnalysis
+            })
+
+            if (isSuccessResponse(response)) {
+                setAnalysisResult(response.data)
+            } else {
+                setError(getErrorMessage(response))
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Analysis failed')
+        } finally {
+            setAnalyzing(false)
+        }
+    }
+
+    const getHealthColor = (score: number) => {
+        if (score >= 80) return 'text-green-400'
+        if (score >= 60) return 'text-yellow-400'
+        return 'text-red-400'
+    }
+
+    const getHealthBg = (score: number) => {
+        if (score >= 80) return 'bg-green-500/20 border-green-500/30'
+        if (score >= 60) return 'bg-yellow-500/20 border-yellow-500/30'
+        return 'bg-red-500/20 border-red-500/30'
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-white">Repository Analysis</h1>
+                <div className="flex space-x-3">
+                    <button
+                        onClick={handleAnalyze}
+                        disabled={analyzing}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center"
+                    >
+                        {analyzing ? (
+                            <>
+                                <Loader size={16} className="animate-spin mr-2" />
+                                Analyzing...
+                            </>
+                        ) : (
+                            <>
+                                <Search size={16} className="mr-2" />
+                                Analyze Repository
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Input Section */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Analysis Configuration</h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                            Repository Path
+                        </label>
+                        <div className="relative">
+                            <Folder size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={repoPath}
+                                onChange={(e) => setRepoPath(e.target.value)}
+                                placeholder="e.g., /path/to/project or C:\path\to\project"
+                                className="w-full pl-10 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center">
+                        <label className="flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={deepAnalysis}
+                                onChange={(e) => setDeepAnalysis(e.target.checked)}
+                                className="mr-3 w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-slate-300">
+                                Deep Code Analysis
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div className="mt-4 text-sm text-slate-400">
+                    <p><strong>Deep Analysis</strong> includes detailed code quality metrics, complexity analysis, and advanced linting. Enable for comprehensive repository health assessment.</p>
+                </div>
+            </div>
+
+            {/* Error Display */}
+            {error && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
+                    <div className="flex items-center">
+                        <XCircle size={20} className="text-red-400 mr-3" />
+                        <div>
+                            <h3 className="text-red-400 font-medium">Analysis Error</h3>
+                            <p className="text-red-300 text-sm">{error}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Results Section */}
+            {analysisResult && (
+                <div className="space-y-6">
+                    {/* Overview Card */}
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-white">Analysis Overview</h2>
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${getHealthBg(analysisResult.health_score)} ${getHealthColor(analysisResult.health_score)}`}>
+                                Health Score: {analysisResult.health_score}/100
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-blue-400">{analysisResult.repo_name}</div>
+                                <div className="text-sm text-slate-400">Repository</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-green-400">
+                                    {analysisResult.analysis?.structure?.total_files || 0}
+                                </div>
+                                <div className="text-sm text-slate-400">Files</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-2xl font-bold text-yellow-400">
+                                    {analysisResult.analysis?.testing?.coverage || 'N/A'}
+                                </div>
+                                <div className="text-sm text-slate-400">Test Coverage</div>
+                            </div>
+                            <div className="text-center">
+                                <div className={`text-2xl font-bold ${getHealthColor(analysisResult.health_score)}`}>
+                                    {analysisResult.health_score}%
+                                </div>
+                                <div className="text-sm text-slate-400">Health</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Analysis Sections */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Structure Analysis */}
+                        {analysisResult.analysis?.structure && (
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                    <Folder size={20} className="mr-2 text-blue-400" />
+                                    Repository Structure
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Total Files</span>
+                                        <span className="text-white font-medium">{analysisResult.analysis.structure.total_files}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Directories</span>
+                                        <span className="text-white font-medium">{analysisResult.analysis.structure.directories}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Languages</span>
+                                        <span className="text-white font-medium">{Object.keys(analysisResult.analysis.structure.languages || {}).length}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MCP Compliance */}
+                        {analysisResult.analysis?.mcp_compliance && (
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                    <CheckCircle size={20} className="mr-2 text-green-400" />
+                                    MCP Compliance
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-300">FastMCP Version</span>
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            analysisResult.analysis.mcp_compliance.fastmcp_version ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                        }`}>
+                                            {analysisResult.analysis.mcp_compliance.fastmcp_version || 'Not Found'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-300">Server Config</span>
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            analysisResult.analysis.mcp_compliance.server_config ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                        }`}>
+                                            {analysisResult.analysis.mcp_compliance.server_config ? 'Valid' : 'Missing'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Dependencies */}
+                        {analysisResult.analysis?.dependencies && (
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                    <Database size={20} className="mr-2 text-purple-400" />
+                                    Dependencies
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Python Packages</span>
+                                        <span className="text-white font-medium">{analysisResult.analysis.dependencies.python?.length || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Node Packages</span>
+                                        <span className="text-white font-medium">{analysisResult.analysis.dependencies.node?.length || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-300">Total Dependencies</span>
+                                        <span className="text-white font-medium">
+                                            {(analysisResult.analysis.dependencies.python?.length || 0) +
+                                             (analysisResult.analysis.dependencies.node?.length || 0)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Testing */}
+                        {analysisResult.analysis?.testing && (
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                    <Activity size={20} className="mr-2 text-orange-400" />
+                                    Testing & Quality
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-300">Test Files</span>
+                                        <span className="text-white font-medium">{analysisResult.analysis.testing.test_files}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-300">Coverage</span>
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            (analysisResult.analysis.testing.coverage || 0) > 80 ? 'bg-green-500/20 text-green-400' :
+                                            (analysisResult.analysis.testing.coverage || 0) > 60 ? 'bg-yellow-500/20 text-yellow-400' :
+                                            'bg-red-500/20 text-red-400'
+                                        }`}>
+                                            {analysisResult.analysis.testing.coverage || 'N/A'}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Recommendations */}
+                    {analysisResult.recommendations && analysisResult.recommendations.length > 0 && (
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                <AlertTriangle size={20} className="mr-2 text-yellow-400" />
+                                Recommendations
+                            </h3>
+                            <div className="space-y-3">
+                                {analysisResult.recommendations.map((rec: string, index: number) => (
+                                    <div key={index} className="flex items-start space-x-3">
+                                        <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                                        <p className="text-slate-300">{rec}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
+
+// Clients Page Component
+function ClientsPage({ clients, setClients }: { clients: any, setClients: (clients: any) => void }) {
+    const [checkingClients, setCheckingClients] = useState(false)
+    const [clientError, setClientError] = useState<string | null>(null)
+
+    const handleCheckClients = async () => {
+        setCheckingClients(true)
+        setClientError(null)
+
+        try {
+            const result = await api.checkClientIntegration({ operation: 'check' })
+            if (isSuccessResponse(result)) {
+                setClients(result.data || {})
+                setClientError(null)
+            } else {
+                setClientError('Client discovery failed: ' + getErrorMessage(result))
+            }
+        } catch (err) {
+            setClientError(err instanceof Error ? err.message : 'Client discovery failed')
+        } finally {
+            setCheckingClients(false)
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-white">MCP Client Discovery</h1>
+                <div className="flex space-x-3">
+                    <button
+                        onClick={handleCheckClients}
+                        disabled={checkingClients}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center"
+                    >
+                        {checkingClients ? (
+                            <>
+                                <Loader size={16} className="animate-spin mr-2" />
+                                Checking...
+                            </>
+                        ) : (
+                            <>
+                                <Search size={16} className="mr-2" />
+                                Check Clients
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Error Display */}
+            {clientError && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
+                    <div className="flex items-center">
+                        <XCircle size={20} className="text-red-400 mr-3" />
+                        <div>
+                            <h3 className="text-red-400 font-medium">Client Discovery Error</h3>
+                            <p className="text-red-300 text-sm">{clientError}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Loading State */}
+            {checkingClients ? (
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-12 text-center">
+                    <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-slate-400">Checking MCP client integrations...</p>
+                </div>
+            ) : clients && Object.keys(clients).length > 0 ? (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(clients).map(([clientName, clientData]: [string, any]) => (
+                            <div key={clientName} className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className={`w-3 h-3 rounded-full ${
+                                            clientData?.status === 'connected' ? 'bg-green-500' :
+                                            clientData?.status === 'configured' ? 'bg-blue-500' :
+                                            clientData?.error ? 'bg-red-500' : 'bg-gray-500'
+                                        }`}></div>
+                                        <h3 className="text-lg font-semibold text-white capitalize">{clientName}</h3>
+                                    </div>
+                                    <Eye className="w-5 h-5 text-slate-400" />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-400">Status:</span>
+                                        <span className={`text-sm px-2 py-1 rounded ${
+                                            clientData?.status === 'connected' ? 'bg-green-500/20 text-green-400' :
+                                            clientData?.status === 'configured' ? 'bg-blue-500/20 text-blue-400' :
+                                            clientData?.error ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
+                                        }`}>
+                                            {clientData?.status || 'unknown'}
+                                        </span>
+                                    </div>
+
+                                    {clientData?.version && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-400">Version:</span>
+                                            <span className="text-white text-sm">{clientData.version}</span>
+                                        </div>
+                                    )}
+
+                                    {clientData?.config_path && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-400">Config:</span>
+                                            <span className="text-slate-300 text-sm truncate max-w-32" title={clientData.config_path}>
+                                                {clientData.config_path.split(/[/\\]/).pop()}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {clientData?.servers && clientData.servers.length > 0 && (
+                                        <div className="mt-4">
+                                            <div className="text-slate-400 text-sm mb-2">Configured Servers:</div>
+                                            <div className="space-y-1">
+                                                {clientData.servers.slice(0, 3).map((server: any, idx: number) => (
+                                                    <div key={idx} className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1">
+                                                        <span className="text-slate-300 text-xs truncate max-w-24">{server.name}</span>
+                                                        <div className={`w-2 h-2 rounded-full ${
+                                                            server.status === 'connected' ? 'bg-green-500' :
+                                                            server.status === 'configured' ? 'bg-blue-500' : 'bg-gray-500'
+                                                        }`}></div>
+                                                    </div>
+                                                ))}
+                                                {clientData.servers.length > 3 && (
+                                                    <div className="text-slate-500 text-xs text-center">
+                                                        +{clientData.servers.length - 3} more
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {clientData?.error && (
+                                        <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded">
+                                            <div className="flex items-center mb-1">
+                                                <AlertTriangle size={14} className="text-red-400 mr-1" />
+                                                <span className="text-red-400 text-xs font-medium">Error</span>
+                                            </div>
+                                            <p className="text-red-300 text-xs">{clientData.error}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
+                    <Eye size={48} className="mx-auto mb-4 text-slate-600" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No Client Data Available</h3>
+                    <p className="text-slate-400 mb-6">
+                        Click "Check Clients" to scan for MCP client configurations across your system.
+                        This will check common IDEs like Claude Desktop, Cursor, Windsurf, Zed, and Antigravity.
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-slate-500">
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center mb-1">
+                                <span className="text-xs">🟢</span>
+                            </div>
+                            Claude
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center mb-1">
+                                <span className="text-xs">🟢</span>
+                            </div>
+                            Cursor
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center mb-1">
+                                <span className="text-xs">🟢</span>
+                            </div>
+                            Windsurf
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center mb-1">
+                                <span className="text-xs">🟢</span>
+                            </div>
+                            Zed
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center mb-1">
+                                <span className="text-xs">🟢</span>
+                            </div>
+                            Antigravity
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }
 
 function App() {
@@ -702,33 +1194,8 @@ function App() {
 
                                {/* Clients Page */}
                                {activePage === 'clients' && (
-                                   <div className="space-y-6">
-                                       <div className="flex items-center justify-between">
-                                           <h1 className="text-3xl font-bold text-white">MCP Client Discovery</h1>
-                                           <div className="flex space-x-3">
-                                               <button
-                                                   onClick={async () => {
-                                                       const result = await api.checkClientIntegration({ operation: 'check' })
-                                                       if (isSuccessResponse(result)) {
-                                                           setClients(result.data || {})
-                                                           alert(`Client check completed! Found ${Object.keys(result.data || {}).length} configured clients.`)
-                                                       } else {
-                                                           alert('Client discovery failed: ' + getErrorMessage(result))
-                                                       }
-                                                   }}
-                                                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-                                               >
-                                                   <Search size={16} className="inline mr-2" />
-                                                   Check Clients
-                                               </button>
-                                           </div>
-                                       </div>
-
-                                       {loading ? (
-                                           <div className="bg-slate-800 rounded-xl border border-slate-700 p-12 text-center">
-                                               <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                                               <p className="text-slate-400">Checking MCP client integrations...</p>
-                                           </div>
+                                   <ClientsPage clients={clients} setClients={setClients} />
+                               )}
                                        ) : clients ? (
                                            <div className="space-y-6">
                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -942,25 +1409,8 @@ function App() {
 
                                {/* Repository Analysis Page */}
                                {activePage === 'repo-analysis' && (
-                                   <div className="space-y-6">
-                                       <div className="flex items-center justify-between">
-                                           <h1 className="text-3xl font-bold text-white">Repository Analysis</h1>
-                                           <div className="flex space-x-3">
-                                               <button
-                                                   onClick={async () => {
-                                                       const repoPath = prompt('Enter repository path to analyze:')
-                                                       if (repoPath) {
-                                                           // This would need a proper API call
-                                                           alert('Repository analysis not yet fully implemented in frontend')
-                                                       }
-                                                   }}
-                                                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-                                               >
-                                                   <FileText size={16} className="inline mr-2" />
-                                                   Analyze Repository
-                                               </button>
-                                           </div>
-                                       </div>
+                                   <RepositoryAnalysisPage />
+                               )}
 
                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
