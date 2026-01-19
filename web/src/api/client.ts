@@ -35,6 +35,8 @@ class ApiClient {
                 'Content-Type': 'application/json',
                 ...options.headers,
             },
+            // Add timeout to prevent hanging requests
+            signal: AbortSignal.timeout(45000), // 45 second timeout
             ...options,
         };
 
@@ -49,10 +51,22 @@ class ApiClient {
             return data;
         } catch (error) {
             console.error('API request failed:', error);
+
+            let errorMessage = 'Unknown error occurred';
+            if (error instanceof Error) {
+                if (error.name === 'TimeoutError') {
+                    errorMessage = 'Request timed out. The operation may be taking too long.';
+                } else if (error.name === 'AbortError') {
+                    errorMessage = 'Request was cancelled or timed out.';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+
             return {
                 success: false,
-                message: error instanceof Error ? error.message : 'Unknown error occurred',
-                errors: [error instanceof Error ? error.message : 'Unknown error'],
+                message: errorMessage,
+                errors: [errorMessage],
             };
         }
     }

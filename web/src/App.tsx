@@ -44,8 +44,16 @@ function RepositoryAnalysisPage() {
     const [error, setError] = useState<string | null>(null)
 
     const handleAnalyze = async () => {
-        if (!repoPath.trim()) {
+        const trimmedPath = repoPath.trim()
+        if (!trimmedPath) {
             setError('Please enter a repository path')
+            return
+        }
+
+        // Prevent scanning dangerous paths that could hang the system
+        const dangerousPaths = ['/', '\\', 'C:', 'C:\\', 'D:', 'D:\\', '/root', '/home']
+        if (dangerousPaths.some(path => trimmedPath.startsWith(path) && trimmedPath.length <= path.length + 5)) {
+            setError('Cannot scan root directories or drives. Please specify a specific project folder.')
             return
         }
 
@@ -53,11 +61,18 @@ function RepositoryAnalysisPage() {
         setError(null)
         setAnalysisResult(null)
 
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Analysis timed out after 30 seconds')), 30000)
+        })
+
         try {
-            const response = await api.scanRepository({
-                repo_path: repoPath.trim(),
+            const analysisPromise = api.scanRepository({
+                repo_path: trimmedPath,
                 deep_analysis: deepAnalysis
             })
+
+            const response = await Promise.race([analysisPromise, timeoutPromise]) as any
 
             if (isSuccessResponse(response)) {
                 setAnalysisResult(response.data)
@@ -65,7 +80,8 @@ function RepositoryAnalysisPage() {
                 setError(getErrorMessage(response))
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Analysis failed')
+            const errorMessage = err instanceof Error ? err.message : 'Analysis failed'
+            setError(errorMessage)
         } finally {
             setAnalyzing(false)
         }
@@ -340,8 +356,15 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
         setCheckingClients(true)
         setClientError(null)
 
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Client discovery timed out after 15 seconds')), 15000)
+        })
+
         try {
-            const result = await api.checkClientIntegration({ operation: 'check' })
+            const discoveryPromise = api.checkClientIntegration({ operation: 'check' })
+            const result = await Promise.race([discoveryPromise, timeoutPromise]) as any
+
             if (isSuccessResponse(result)) {
                 setClients(result.data || {})
                 setClientError(null)
@@ -349,7 +372,8 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                 setClientError('Client discovery failed: ' + getErrorMessage(result))
             }
         } catch (err) {
-            setClientError(err instanceof Error ? err.message : 'Client discovery failed')
+            const errorMessage = err instanceof Error ? err.message : 'Client discovery failed'
+            setClientError(errorMessage)
         } finally {
             setCheckingClients(false)
         }

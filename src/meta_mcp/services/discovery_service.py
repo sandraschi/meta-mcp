@@ -48,6 +48,8 @@ class DiscoveryService(MetaMCPService):
         """Check client integration status."""
         try:
             if operation == "check":
+                # This operation can take some time, but should be bounded
+                # The client_integration.py does the heavy lifting
                 # Check all clients or specific client
                 clients_to_check = [
                     "claude",

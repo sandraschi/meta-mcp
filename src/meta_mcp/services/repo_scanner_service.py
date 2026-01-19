@@ -23,6 +23,16 @@ class RepoScannerService(MetaMCPService):
             if not path.exists():
                 return self.create_response(False, f"Repository path not found: {repo_path}")
 
+            # Safety check: prevent scanning root directories or drives
+            dangerous_paths = ['/', '\\', 'C:', 'C:\\', 'D:', 'D:\\', '/root', '/home', '/usr', '/opt']
+            if any(str(path).startswith(dangerous) and len(str(path)) <= len(dangerous) + 10 for dangerous in dangerous_paths):
+                return self.create_response(False, "Cannot scan root directories or system paths for safety reasons")
+
+            # Safety check: limit directory depth and file count
+            total_files = sum(1 for _ in path.rglob('*') if _.is_file())
+            if total_files > 10000:  # Arbitrary limit to prevent hangs
+                return self.create_response(False, f"Repository too large ({total_files} files). Maximum 10,000 files allowed.")
+
             analysis = {
                 "structure": await self._analyze_structure(path),
                 "dependencies": await self._analyze_dependencies(path),
@@ -66,7 +76,11 @@ class RepoScannerService(MetaMCPService):
                     structure["main_package"] = item.name
                     break
 
-        if (path / "tests").exists() or any(path.glob("test_*.py")):
+        try:
+            has_test_files = (path / "tests").exists() or any(path.glob("test_*.py"))
+        except:
+            has_test_files = (path / "tests").exists()
+        if has_test_files:
             structure["has_tests"] = True
 
         if (path / "docs").exists() or (path / "README.md").exists():
@@ -75,10 +89,16 @@ class RepoScannerService(MetaMCPService):
         if (path / ".github" / "workflows").exists() or (path / ".gitlab-ci.yml").exists():
             structure["has_ci"] = True
 
-        # Find Python entry points
-        for py_file in path.glob("*.py"):
-            if py_file.name != "__init__.py":
-                structure["entry_points"].append(py_file.name)
+        # Find Python entry points (limit to prevent hangs)
+        try:
+            for py_file in path.glob("*.py"):
+                if len(structure["entry_points"]) >= 20:  # Limit entry points
+                    break
+                if py_file.name != "__init__.py":
+                    structure["entry_points"].append(py_file.name)
+        except:
+            # Ignore glob errors
+            pass
 
         return structure
 
