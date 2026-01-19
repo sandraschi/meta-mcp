@@ -188,6 +188,7 @@ async def discover_clients() -> List[Dict[str, Any]]:
             "executable_path": None,
             "config_exists": False,
             "mcp_configured": False,
+            "mcp_servers": [],  # List of configured MCP servers
             "version": None,
             "status": "not_found",
         }
@@ -218,24 +219,60 @@ async def discover_clients() -> List[Dict[str, Any]]:
         if config_path.exists():
             client_status["config_exists"] = True
 
-            # Check if MCP is configured
+            # Parse MCP configuration and extract servers
             try:
                 config = load_json_with_comments(config_path)
-                has_mcp = False
+                mcp_servers = []
 
                 if client_id == "zed":
-                    has_mcp = "context_servers" in config or ("mcp" in config and "servers" in config["mcp"])
-                elif client_id == "vscode":
-                    has_mcp = "mcp" in config and "servers" in config["mcp"]
-                else:
-                    has_mcp = "mcpServers" in config
+                    # Zed uses "context_servers" or "mcp.servers"
+                    if "context_servers" in config:
+                        for server_name, server_config in config["context_servers"].items():
+                            mcp_servers.append({
+                                "name": server_name,
+                                "command": server_config.get("command", ""),
+                                "args": server_config.get("args", []),
+                                "env": server_config.get("env", {}),
+                            })
+                    elif "mcp" in config and "servers" in config["mcp"]:
+                        for server_name, server_config in config["mcp"]["servers"].items():
+                            mcp_servers.append({
+                                "name": server_name,
+                                "command": server_config.get("command", ""),
+                                "args": server_config.get("args", []),
+                                "env": server_config.get("env", {}),
+                            })
 
-                if has_mcp:
+                elif client_id == "vscode":
+                    # VS Code uses "mcp.servers"
+                    if "mcp" in config and "servers" in config["mcp"]:
+                        for server_name, server_config in config["mcp"]["servers"].items():
+                            mcp_servers.append({
+                                "name": server_name,
+                                "command": server_config.get("command", ""),
+                                "args": server_config.get("args", []),
+                                "env": server_config.get("env", {}),
+                            })
+
+                else:
+                    # Standard MCP format (Cursor, Windsurf, Claude, etc.)
+                    if "mcpServers" in config:
+                        for server_name, server_config in config["mcpServers"].items():
+                            mcp_servers.append({
+                                "name": server_name,
+                                "command": server_config.get("command", ""),
+                                "args": server_config.get("args", []),
+                                "env": server_config.get("env", {}),
+                            })
+
+                client_status["mcp_servers"] = mcp_servers
+
+                if mcp_servers:
                     client_status["mcp_configured"] = True
                     client_status["status"] = "configured"
 
-            except Exception:
-                pass
+            except Exception as e:
+                client_status["config_error"] = str(e)
 
         discovered_clients.append(client_status)
 

@@ -488,22 +488,31 @@ function ClientsPage({ clients, setClients }: { clients: any, setClients: (clien
                                         </div>
                                     )}
 
-                                    {clientData?.servers && clientData.servers.length > 0 && (
+                                    {clientData?.mcp_servers && clientData.mcp_servers.length > 0 && (
                                         <div className="mt-4">
-                                            <div className="text-slate-400 text-sm mb-2">Configured Servers:</div>
-                                            <div className="space-y-1">
-                                                {clientData.servers.slice(0, 3).map((server: any, idx: number) => (
-                                                    <div key={idx} className="flex items-center justify-between bg-slate-700/50 rounded px-2 py-1">
-                                                        <span className="text-slate-300 text-xs truncate max-w-24">{server.name}</span>
-                                                        <div className={`w-2 h-2 rounded-full ${
-                                                            server.status === 'connected' ? 'bg-green-500' :
-                                                            server.status === 'configured' ? 'bg-blue-500' : 'bg-gray-500'
-                                                        }`}></div>
+                                            <div className="text-slate-400 text-sm mb-2">Configured MCP Servers:</div>
+                                            <div className="space-y-2">
+                                                {clientData.mcp_servers.slice(0, 5).map((server: any, idx: number) => (
+                                                    <div key={idx} className="bg-slate-700/50 rounded px-3 py-2">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-slate-300 text-sm font-medium">{server.name}</span>
+                                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                        </div>
+                                                        {server.command && (
+                                                            <div className="text-slate-400 text-xs truncate max-w-48" title={server.command}>
+                                                                {server.command.split(/[/\\]/).pop()}
+                                                            </div>
+                                                        )}
+                                                        {server.args && server.args.length > 0 && (
+                                                            <div className="text-slate-500 text-xs mt-1">
+                                                                Args: {server.args.join(', ')}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
-                                                {clientData.servers.length > 3 && (
+                                                {clientData.mcp_servers.length > 5 && (
                                                     <div className="text-slate-500 text-xs text-center">
-                                                        +{clientData.servers.length - 3} more
+                                                        +{clientData.mcp_servers.length - 5} more servers
                                                     </div>
                                                 )}
                                             </div>
@@ -659,7 +668,9 @@ function App() {
         clients: {
             configured: clients ? Object.values(clients).filter((c: any) => c?.mcp_configured).length : 0,
             connected: clients ? Object.values(clients).filter((c: any) => c?.status === 'configured').length : 0,
-            total: clients ? Object.keys(clients).length : 5 // Total discovered clients
+            total: clients ? Object.keys(clients).length : 5, // Total discovered clients
+            total_servers: clients ? Object.values(clients).reduce((total: number, c: any) =>
+                total + (c?.mcp_servers?.length || 0), 0) : 0
         },
         security: {
             score: healthStatus ? (Object.values(healthStatus).every(s => s.healthy) ? 98 : 75) : 0,
