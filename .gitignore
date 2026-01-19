@@ -1,18 +1,69 @@
-# Python Caches
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+dist/
+build/
 .venv/
 venv/
 env/
+.ENV/
 .env
+.env.local
+.env.production
+.env.staging
 
-# Linting/Testing Caches
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+dist/
+build/
+.next/
+.nuxt/
+.vite/
+.web/
+
+# Testing & Coverage
 .ruff_cache/
 .pytest_cache/
 .mypy_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# IDEs & Editors
+.vscode/
+.idea/
+.windsurf/
+.cursor/
+.zig/
+.zed/
+.antigravity/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
 
 # Backups and Temp Files
 *.backup
@@ -20,13 +71,49 @@ htmlcov/
 *.tmp
 .backup-test-*
 .backup-rules.md
+*.log
+logs/
 
-# IDEs
-.vscode/
-.idea/
-.windsurf/
-.cursor/
+# Documentation Build
+docs/_build/
+docs/build/
 
-# OS Files
-.DS_Store
-Thumbs.db
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary Files
+.tmp/
+temp/
+.cache/
+
+# MCP Specific
+mcp_logs/
+mcp_cache/
+.server_configs/
+.client_configs/
+*.mcpb
+*.dxt
+
+# Web Development
+.parcel-cache/
+.cache/
+public/uploads/
+public/assets/
+
+# Runtime Data
+*.pid
+*.lock
+process.json
+
+# Logs
+*.log
+logs/
+mcp-server.log
+web-server.log
+
+# Backup Files
+*.bak
+*.orig
+*.rej
