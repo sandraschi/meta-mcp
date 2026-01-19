@@ -5,6 +5,50 @@ All notable changes to Meta MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-01-19 - Repomix Integration & Repository Intelligence 🧠
+
+### 🚀 Major Feature Expansion
+
+**MetaMCP Enterprise** now includes **Repomix-inspired repository intelligence** - advanced token analysis and AI-optimized repository packing capabilities.
+
+#### Added
+- **🧠 Token Analysis Suite**: Complete token usage analysis for LLM context optimization
+  - File-level token counting with language detection
+  - Directory-wide token distribution analysis
+  - LLM context limit compatibility estimation (GPT-4, Claude, Gemini, etc.)
+  - Token efficiency metrics and optimization recommendations
+
+- **📦 Repository Packing Suite**: AI-first repository consolidation inspired by repomix
+  - Multi-format output: XML, Markdown, JSON, Plain Text
+  - AI-optimized packing with automatic token limits
+  - Intelligent file selection prioritizing important code
+  - Git-aware filtering with .gitignore and custom exclusions
+  - Security filtering to prevent sensitive data leakage
+
+- **🌐 Enhanced Web Dashboard**: New enterprise management sections
+  - Token Analysis page with real-time LLM compatibility checking
+  - Repository Packing page with format selection and optimization
+  - Advanced repository intelligence visualization
+  - Interactive token limit estimation tools
+
+- **🔧 Repomix Integration**: Advanced repository intelligence features
+  - Repository consolidation for AI consumption
+  - Token-aware content optimization
+  - Multi-format AI-friendly packaging
+  - Intelligent file prioritization for context limits
+
+#### Technical Enhancements
+- **10 Enterprise Tool Suites**: Complete MCP ecosystem coverage
+- **Advanced Token Estimation**: Language-specific token counting algorithms
+- **AI Context Optimization**: Automatic content selection for LLM consumption
+- **Multi-Format Repository Export**: XML (repomix-style), Markdown, JSON, Plain Text
+- **Security-Enhanced Packing**: Sensitive data filtering and exclusion
+
+### Breaking Changes
+- **New Tool Suites**: Added token_analysis and repo_packing suites
+- **API Expansion**: 50+ endpoints across 10 service suites
+- **Web Interface**: Added Token Analysis and Repository Packing pages
+
 ## [3.0.0] - 2026-01-19 - Enterprise Launch 🚀
 
 ### 🎉 Major Enterprise Release

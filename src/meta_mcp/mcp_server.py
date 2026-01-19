@@ -25,6 +25,8 @@ from meta_mcp.tools.registries.server_management import register_server_manageme
 from meta_mcp.tools.registries.tool_execution import register_tool_execution_tools
 from meta_mcp.tools.registries.repository_analysis import register_repository_analysis_tools
 from meta_mcp.tools.registries.client_management import register_client_management_tools
+from meta_mcp.tools.registries.token_analysis import register_token_analysis_tools
+from meta_mcp.tools.registries.repo_packing import register_repo_packing_tools
 
 # 1. Force Binary Mode (Prevent CRLF corruption on Windows)
 if os.name == "nt":
@@ -149,6 +151,8 @@ def initialize_tools(mcp: FastMCP):
     registry.register_suite("tool_execution", register_tool_execution_tools)
     registry.register_suite("repository_analysis", register_repository_analysis_tools)
     registry.register_suite("client_management", register_client_management_tools)
+    registry.register_suite("token_analysis", register_token_analysis_tools)
+    registry.register_suite("repo_packing", register_repo_packing_tools)
 
     logger.info(
         "MetaMCP Modular Suites Loaded Successfully",

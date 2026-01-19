@@ -157,6 +157,8 @@ function App() {
                 { id: 'server-management', label: 'Server Mgmt', icon: Settings, badge: null },
                 { id: 'tool-execution', label: 'Tool Exec', icon: Play, badge: null },
                 { id: 'repo-analysis', label: 'Repo Analysis', icon: FileText, badge: null },
+                { id: 'token-analysis', label: 'Token Analysis', icon: TrendingUp, badge: null },
+                { id: 'repo-packing', label: 'Repo Packing', icon: Download, badge: null },
                 { id: 'databases', label: 'Databases', icon: Database, badge: '0' }
             ]
         },
@@ -997,6 +999,156 @@ function App() {
                                    </div>
                                )}
 
+                               {/* Token Analysis Page */}
+                               {activePage === 'token-analysis' && (
+                                   <div className="space-y-6">
+                                       <div className="flex items-center justify-between">
+                                           <h1 className="text-3xl font-bold text-white">Token Analysis</h1>
+                                           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                                               <BarChart3 size={16} className="inline mr-2" />
+                                               Analyze Tokens
+                                           </button>
+                                       </div>
+
+                                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                           <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                               <h3 className="text-lg font-semibold text-white mb-4">File Token Analysis</h3>
+                                               <div className="space-y-4">
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">File Path</label>
+                                                       <input
+                                                           type="text"
+                                                           placeholder="/path/to/file.py"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <button className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                                                       Analyze File
+                                                   </button>
+                                               </div>
+                                           </div>
+
+                                           <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                               <h3 className="text-lg font-semibold text-white mb-4">Directory Token Analysis</h3>
+                                               <div className="space-y-4">
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">Directory Path</label>
+                                                       <input
+                                                           type="text"
+                                                           placeholder="/path/to/directory"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">File Extensions</label>
+                                                       <input
+                                                           type="text"
+                                                           placeholder=".py,.js,.ts,.java"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <button className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium">
+                                                       Analyze Directory
+                                                   </button>
+                                               </div>
+                                           </div>
+                                       </div>
+
+                                       <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                           <h3 className="text-lg font-semibold text-white mb-4">LLM Context Limit Analysis</h3>
+                                           <div className="space-y-4">
+                                               <div>
+                                                   <label className="block text-sm font-medium text-slate-400 mb-1">Token Count</label>
+                                                   <input
+                                                       type="number"
+                                                       placeholder="50000"
+                                                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                   />
+                                               </div>
+                                               <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium">
+                                                   Check Context Limits
+                                               </button>
+                                           </div>
+                                       </div>
+                                   </div>
+                               )}
+
+                               {/* Repository Packing Page */}
+                               {activePage === 'repo-packing' && (
+                                   <div className="space-y-6">
+                                       <div className="flex items-center justify-between">
+                                           <h1 className="text-3xl font-bold text-white">Repository Packing</h1>
+                                           <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                                               <Download size={16} className="inline mr-2" />
+                                               Pack Repository
+                                           </button>
+                                       </div>
+
+                                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                           <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                               <h3 className="text-lg font-semibold text-white mb-4">Pack Repository</h3>
+                                               <div className="space-y-4">
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">Repository Path</label>
+                                                       <input
+                                                           type="text"
+                                                           placeholder="/path/to/repository"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">Output Format</label>
+                                                       <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                           <option value="xml">XML (Repomix style)</option>
+                                                           <option value="markdown">Markdown</option>
+                                                           <option value="json">JSON</option>
+                                                           <option value="plain">Plain Text</option>
+                                                       </select>
+                                                   </div>
+                                                   <button className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                                                       Pack Repository
+                                                   </button>
+                                               </div>
+                                           </div>
+
+                                           <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                               <h3 className="text-lg font-semibold text-white mb-4">AI-Optimized Packing</h3>
+                                               <div className="space-y-4">
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">Repository Path</label>
+                                                       <input
+                                                           type="text"
+                                                           placeholder="/path/to/repository"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <div>
+                                                       <label className="block text-sm font-medium text-slate-400 mb-1">Max Tokens</label>
+                                                       <input
+                                                           type="number"
+                                                           placeholder="100000"
+                                                           defaultValue="100000"
+                                                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                       />
+                                                   </div>
+                                                   <button className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium">
+                                                       Pack for AI
+                                                   </button>
+                                               </div>
+                                           </div>
+                                       </div>
+
+                                       <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                                           <h3 className="text-lg font-semibold text-white mb-4">Packing Results</h3>
+                                           <div className="text-center py-8">
+                                               <Download className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                               <p className="text-slate-400">Packed repository will appear here</p>
+                                               <p className="text-slate-500 text-sm">Use the pack buttons above to create AI-friendly repository bundles</p>
+                                           </div>
+                                       </div>
+                                   </div>
+                               )}
+
                                {/* Tools Page */}
                                {activePage === 'tools' && (
                                    <div className="space-y-6">
@@ -1325,7 +1477,7 @@ function App() {
                                )}
 
                                {/* Default Page */}
-                               {!['dashboard', 'servers', 'clients', 'tools', 'server-management', 'tool-execution', 'repo-analysis', 'analytics', 'security', 'monitoring', 'logs'].includes(activePage) && (
+                               {!['dashboard', 'servers', 'clients', 'tools', 'server-management', 'tool-execution', 'repo-analysis', 'token-analysis', 'repo-packing', 'analytics', 'security', 'monitoring', 'logs'].includes(activePage) && (
                                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-12 text-center">
                                        <div className="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
                                            <Settings className="w-12 h-12 text-slate-400" />

@@ -5,7 +5,7 @@ MetaMCP REST API Router - Exposes MCP tools via HTTP endpoints.
 Provides webapp-accessible REST API for all MCP tool operations.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 
@@ -18,6 +18,8 @@ from meta_mcp.services.server_service import ServerService
 from meta_mcp.services.tool_service import ToolService
 from meta_mcp.services.repo_scanner_service import RepoScannerService
 from meta_mcp.services.client_settings_manager import ClientSettingsManager
+from meta_mcp.services.token_analysis_service import TokenAnalysisService
+from meta_mcp.services.repo_packing_service import RepoPackingService
 
 # Create router
 router = APIRouter(prefix="/api/v1", tags=["mcp-tools"])
@@ -31,6 +33,8 @@ server_service = ServerService()
 tool_service = ToolService()
 repo_scanner = RepoScannerService()
 client_manager = ClientSettingsManager()
+token_analyzer = TokenAnalysisService()
+repo_packer = RepoPackingService()
 
 
 # Request/Response Models
@@ -217,6 +221,8 @@ async def get_detailed_health():
             "tool_execution": await tool_service.get_health_status(),
             "repository_analysis": await repo_scanner.get_health_status(),
             "client_management": await client_manager.get_health_status(),
+            "token_analysis": await token_analyzer.get_health_status(),
+            "repo_packing": await repo_packer.get_health_status(),
         }
 
         # Determine overall status
@@ -379,6 +385,35 @@ async def list_available_tools():
                     "parameters": [],
                 },
             },
+            "token_analysis": {
+                "analyze_file_tokens": {
+                    "description": "Analyze token usage in specific files",
+                    "operations": ["analyze"],
+                    "parameters": ["file_path"],
+                },
+                "analyze_directory_tokens": {
+                    "description": "Analyze token usage across directories",
+                    "operations": ["analyze"],
+                    "parameters": ["dir_path", "extensions"],
+                },
+                "estimate_context_limits": {
+                    "description": "Estimate LLM context limit compatibility",
+                    "operations": ["estimate"],
+                    "parameters": ["token_count"],
+                },
+            },
+            "repo_packing": {
+                "pack_repository": {
+                    "description": "Pack repository into AI-friendly formats",
+                    "operations": ["pack"],
+                    "parameters": ["repo_path", "output_format", "include_patterns", "exclude_patterns"],
+                },
+                "pack_repository_for_ai": {
+                    "description": "Pack repository optimized for AI consumption",
+                    "operations": ["pack"],
+                    "parameters": ["repo_path", "max_tokens"],
+                },
+            },
         }
 
         return {
@@ -517,3 +552,49 @@ async def validate_client_config(client_name: str):
 async def list_client_configs():
     """List all available client configurations."""
     return await client_manager.list_client_configs()
+
+
+# Token Analysis Endpoints
+@router.post("/tokens/analyze-file", summary="Analyze File Tokens")
+async def analyze_file_tokens(file_path: str):
+    """Analyze token usage in a specific file."""
+    result = await token_analyzer.analyze_file_tokens(file_path)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("message"))
+    return result
+
+
+@router.post("/tokens/analyze-directory", summary="Analyze Directory Tokens")
+async def analyze_directory_tokens(dir_path: str, extensions: Optional[List[str]] = None):
+    """Analyze token usage across files in a directory."""
+    result = await token_analyzer.analyze_directory_tokens(dir_path, extensions)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("message"))
+    return result
+
+
+@router.post("/tokens/context-limits", summary="Estimate Context Limits")
+async def estimate_context_limits(token_count: int):
+    """Estimate how tokens fit within LLM context limits."""
+    return await token_analyzer.estimate_context_limits(token_count)
+
+
+# Repository Packing Endpoints
+@router.post("/repos/pack", summary="Pack Repository")
+async def pack_repository(repo_path: str, output_format: str = "xml",
+                         include_patterns: Optional[List[str]] = None,
+                         exclude_patterns: Optional[List[str]] = None):
+    """Pack repository contents into AI-friendly format."""
+    result = await repo_packer.pack_repository(repo_path, output_format, include_patterns, exclude_patterns)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("message"))
+    return result
+
+
+@router.post("/repos/pack-for-ai", summary="Pack Repository for AI")
+async def pack_repository_for_ai(repo_path: str, max_tokens: int = 100000):
+    """Pack repository optimized for AI consumption with token limits."""
+    result = await repo_packer.pack_for_ai_consumption(repo_path, max_tokens)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("message"))
+    return result
