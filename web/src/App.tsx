@@ -247,24 +247,108 @@ function RepositoryAnalysisPage() {
                             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                                     <CheckCircle size={20} className="mr-2 text-green-400" />
-                                    MCP Compliance
+                                    MCP Compliance & FastMCP 2.14+ Features
                                 </h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-300">FastMCP Version</span>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                            analysisResult.analysis.mcp_compliance.fastmcp_version ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                        }`}>
-                                            {analysisResult.analysis.mcp_compliance.fastmcp_version || 'Not Found'}
-                                        </span>
+                                <div className="space-y-4">
+                                    {/* Basic Compliance */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-300 text-sm">FastMCP Import</span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                analysisResult.analysis.mcp_compliance.has_fastmcp ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                            }`}>
+                                                {analysisResult.analysis.mcp_compliance.has_fastmcp ? '✓' : '✗'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-300 text-sm">MCP Server</span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                analysisResult.analysis.mcp_compliance.has_mcp_server ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                            }`}>
+                                                {analysisResult.analysis.mcp_compliance.has_mcp_server ? '✓' : '✗'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-300 text-sm">MCP Tools</span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                analysisResult.analysis.mcp_compliance.has_tools ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                            }`}>
+                                                {analysisResult.analysis.mcp_compliance.has_tools ? '✓' : '✗'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-300 text-sm">Manifest</span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                analysisResult.analysis.mcp_compliance.has_manifest ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                            }`}>
+                                                {analysisResult.analysis.mcp_compliance.has_manifest ? '✓' : '○'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-slate-300">Server Config</span>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                            analysisResult.analysis.mcp_compliance.server_config ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                                        }`}>
-                                            {analysisResult.analysis.mcp_compliance.server_config ? 'Valid' : 'Missing'}
-                                        </span>
+
+                                    {/* FastMCP Version */}
+                                    {analysisResult.analysis.mcp_compliance.fastmcp_version && (
+                                        <div className="flex justify-between items-center border-t border-slate-600 pt-3">
+                                            <span className="text-slate-300">FastMCP Version</span>
+                                            <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                                                {analysisResult.analysis.mcp_compliance.fastmcp_version}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* FastMCP 2.14+ Features */}
+                                    <div className="border-t border-slate-600 pt-3">
+                                        <h4 className="text-sm font-medium text-slate-200 mb-3">FastMCP 2.14+ Features</h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Enhanced Responses</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_enhanced_responses ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_enhanced_responses ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Cooperative Patterns</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_cooperative_patterns ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_cooperative_patterns ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Error Recovery</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_error_recovery ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_error_recovery ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Resource Patterns</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_resource_patterns ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_resource_patterns ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Prompt Templates</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_prompt_templates ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_prompt_templates ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-slate-400 text-xs">Progress Callbacks</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-xs ${
+                                                    analysisResult.analysis.mcp_compliance.has_progress_callbacks ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                }`}>
+                                                    {analysisResult.analysis.mcp_compliance.has_progress_callbacks ? '✓' : '○'}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -329,15 +413,34 @@ function RepositoryAnalysisPage() {
                         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
                             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                                 <AlertTriangle size={20} className="mr-2 text-yellow-400" />
-                                Recommendations
+                                Recommendations & FastMCP 2.14+ Upgrades
                             </h3>
                             <div className="space-y-3">
-                                {analysisResult.recommendations.map((rec: string, index: number) => (
-                                    <div key={index} className="flex items-start space-x-3">
-                                        <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
-                                        <p className="text-slate-300">{rec}</p>
-                                    </div>
-                                ))}
+                                {analysisResult.recommendations.map((rec: string, index: number) => {
+                                    const isFastMCPUpgrade = rec.toLowerCase().includes('fastmcp') || rec.toLowerCase().includes('2.14');
+                                    return (
+                                        <div key={index} className="flex items-start space-x-3">
+                                            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                                                isFastMCPUpgrade ? 'bg-blue-400' : 'bg-yellow-400'
+                                            }`}></div>
+                                            <p className={`text-slate-300 ${isFastMCPUpgrade ? 'text-blue-200' : ''}`}>
+                                                {rec}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* FastMCP 2.14+ Benefits */}
+                            <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                                <h4 className="text-sm font-medium text-blue-300 mb-2">🚀 FastMCP 2.14+ Benefits</h4>
+                                <ul className="text-xs text-blue-200 space-y-1">
+                                    <li>• Enhanced response patterns for better AI interactions</li>
+                                    <li>• Cooperative patterns for complex multi-tool workflows</li>
+                                    <li>• Error recovery for production reliability</li>
+                                    <li>• Resource patterns for dynamic content serving</li>
+                                    <li>• Progress callbacks for long-running operations</li>
+                                </ul>
                             </div>
                         </div>
                     )}
