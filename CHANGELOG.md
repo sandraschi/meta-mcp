@@ -5,6 +5,36 @@ All notable changes to Meta MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-02-04 - Premium Webapp & Backend Integration 💎
+
+### 🚀 Major Feature Expansion
+
+**MetaMCP Enterprise** now features a **fully integrated, premium web interface** with real-time backend communication, replacing the previous static/mock implementations.
+
+#### Added
+- **💎 Premium Dark Theme**: Complete UI overhaul with glassmorphism, smooth transitions, and a refined color palette (`bg-slate-950`).
+- **🏗️ Modular Architecture**:
+  - **Layout Engine**: Retractable Sidebar, persistent Topbar with emergency stops, and responsive main content area.
+  - **Interactive Modals**: Global Logger console (Ctrl+`) and Help dialogs (?).
+  - **Atomic Components**: Reusable UI elements for consistency across the application.
+- **🔌 Backend Integration**:
+  - **Live Tool Execution**: Frontend now communicates directly with the Python backend via `executeTool`.
+  - **Real-time Status**: Dashboard reflects actual server and tool states.
+- **🧪 Testing Scaffold**:
+  - **Vitest + RTL**: Comprehensive testing setup for React components.
+  - **CI Integration**: `npm test` script for automated verification.
+
+#### Changed
+- **Webapp Core**: Migrated from monolithic `App.tsx` to a structured, scalable directory format (`components/`, `pages/`, `hooks/`, `context/`).
+- **Dashboard**: Enhanced visualization of system health and active services.
+- **Repository Analysis**: Improved UI for deep codebase inspection.
+- **Client Management**: Refined interface for managing IDE configurations.
+
+## [3.1.1] - 2026-02-04 - Protocol Stability Fix 🔧
+
+### Fixed
+- **🚨 Protocol Corruption**: Configured `structlog` to output via standard logging (stderr) instead of printing directly to stdout, which was corrupting the MCP JSON-RPC protocol during startup.
+
 ## [3.1.0] - 2026-01-19 - Repomix Integration & Repository Intelligence 🧠
 
 ### 🚀 Major Feature Expansion

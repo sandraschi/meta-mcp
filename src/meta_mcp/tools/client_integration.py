@@ -9,7 +9,7 @@ import json
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import structlog
 from meta_mcp.tools import tool
@@ -129,7 +129,14 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 r"C:\Program Files (x86)\Cursor\Cursor.exe",
             ],
             "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Cursor",
-            "config_path": Path.home() / "AppData" / "Roaming" / "Cursor" / "User" / "globalStorage" / "cursor-storage" / "mcp_config.json",
+            "config_path": Path.home()
+            / "AppData"
+            / "Roaming"
+            / "Cursor"
+            / "User"
+            / "globalStorage"
+            / "cursor-storage"
+            / "mcp_config.json",
         },
         "windsurf": {
             "name": "Windsurf",
@@ -139,7 +146,11 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 r"C:\Program Files (x86)\Windsurf\Windsurf.exe",
             ],
             "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Windsurf",
-            "config_path": Path.home() / "AppData" / "Roaming" / "Windsurf" / "mcp_config.json",
+            "config_path": Path.home()
+            / "AppData"
+            / "Roaming"
+            / "Windsurf"
+            / "mcp_config.json",
         },
         "zed": {
             "name": "Zed",
@@ -149,7 +160,11 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 r"C:\Program Files (x86)\Zed\Zed.exe",
             ],
             "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Zed",
-            "config_path": Path.home() / "AppData" / "Roaming" / "Zed" / "settings.json",
+            "config_path": Path.home()
+            / "AppData"
+            / "Roaming"
+            / "Zed"
+            / "settings.json",
         },
         "antigravity": {
             "name": "Antigravity IDE",
@@ -166,7 +181,11 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 r"C:\Program Files\Anthropic\Claude\claude.exe",
             ],
             "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Claude",
-            "config_path": Path.home() / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json",
+            "config_path": Path.home()
+            / "AppData"
+            / "Roaming"
+            / "Claude"
+            / "claude_desktop_config.json",
         },
         "vscode": {
             "name": "VS Code",
@@ -176,7 +195,12 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 r"C:\Program Files (x86)\Microsoft VS Code\Code.exe",
             ],
             "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{771FD6B0-FA20-440A-A002-3B3BAC16DC50}_is1",
-            "config_path": Path.home() / "AppData" / "Roaming" / "Code" / "User" / "settings.json",
+            "config_path": Path.home()
+            / "AppData"
+            / "Roaming"
+            / "Code"
+            / "User"
+            / "settings.json",
         },
     }
 
@@ -207,7 +231,10 @@ async def discover_clients() -> List[Dict[str, Any]]:
         if not client_status["installed"] and "registry_key" in client_info:
             try:
                 import winreg
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, client_info["registry_key"])
+
+                key = winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE, client_info["registry_key"]
+                )
                 client_status["installed"] = True
                 client_status["status"] = "installed"
                 winreg.CloseKey(key)
@@ -227,43 +254,57 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 if client_id == "zed":
                     # Zed uses "context_servers" or "mcp.servers"
                     if "context_servers" in config:
-                        for server_name, server_config in config["context_servers"].items():
-                            mcp_servers.append({
-                                "name": server_name,
-                                "command": server_config.get("command", ""),
-                                "args": server_config.get("args", []),
-                                "env": server_config.get("env", {}),
-                            })
+                        for server_name, server_config in config[
+                            "context_servers"
+                        ].items():
+                            mcp_servers.append(
+                                {
+                                    "name": server_name,
+                                    "command": server_config.get("command", ""),
+                                    "args": server_config.get("args", []),
+                                    "env": server_config.get("env", {}),
+                                }
+                            )
                     elif "mcp" in config and "servers" in config["mcp"]:
-                        for server_name, server_config in config["mcp"]["servers"].items():
-                            mcp_servers.append({
-                                "name": server_name,
-                                "command": server_config.get("command", ""),
-                                "args": server_config.get("args", []),
-                                "env": server_config.get("env", {}),
-                            })
+                        for server_name, server_config in config["mcp"][
+                            "servers"
+                        ].items():
+                            mcp_servers.append(
+                                {
+                                    "name": server_name,
+                                    "command": server_config.get("command", ""),
+                                    "args": server_config.get("args", []),
+                                    "env": server_config.get("env", {}),
+                                }
+                            )
 
                 elif client_id == "vscode":
                     # VS Code uses "mcp.servers"
                     if "mcp" in config and "servers" in config["mcp"]:
-                        for server_name, server_config in config["mcp"]["servers"].items():
-                            mcp_servers.append({
-                                "name": server_name,
-                                "command": server_config.get("command", ""),
-                                "args": server_config.get("args", []),
-                                "env": server_config.get("env", {}),
-                            })
+                        for server_name, server_config in config["mcp"][
+                            "servers"
+                        ].items():
+                            mcp_servers.append(
+                                {
+                                    "name": server_name,
+                                    "command": server_config.get("command", ""),
+                                    "args": server_config.get("args", []),
+                                    "env": server_config.get("env", {}),
+                                }
+                            )
 
                 else:
                     # Standard MCP format (Cursor, Windsurf, Claude, etc.)
                     if "mcpServers" in config:
                         for server_name, server_config in config["mcpServers"].items():
-                            mcp_servers.append({
-                                "name": server_name,
-                                "command": server_config.get("command", ""),
-                                "args": server_config.get("args", []),
-                                "env": server_config.get("env", {}),
-                            })
+                            mcp_servers.append(
+                                {
+                                    "name": server_name,
+                                    "command": server_config.get("command", ""),
+                                    "args": server_config.get("args", []),
+                                    "env": server_config.get("env", {}),
+                                }
+                            )
 
                 client_status["mcp_servers"] = mcp_servers
 

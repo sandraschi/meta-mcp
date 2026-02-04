@@ -9,6 +9,7 @@ export interface ApiResponse<T = any> {
     success: boolean;
     message: string;
     data?: T;
+    result?: any;
     errors?: string[];
     metadata?: {
         service: string;
@@ -99,6 +100,15 @@ export const api = {
 
     async listTools(): Promise<ApiResponse> {
         return apiClient.get('/api/v1/tools/list');
+    },
+
+    // Generic tool execution
+    async executeTool(serverId: string, toolName: string, params: any = {}): Promise<ApiResponse> {
+        return apiClient.post('/api/v1/tools/execute', {
+            server_id: serverId,
+            tool_name: toolName,
+            parameters: params
+        });
     },
 
     // Diagnostics tools

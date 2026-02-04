@@ -23,7 +23,9 @@ from meta_mcp.tools.registries.discovery import register_discovery_tools
 from meta_mcp.tools.registries.scaffolding import register_scaffolding_tools
 from meta_mcp.tools.registries.server_management import register_server_management_tools
 from meta_mcp.tools.registries.tool_execution import register_tool_execution_tools
-from meta_mcp.tools.registries.repository_analysis import register_repository_analysis_tools
+from meta_mcp.tools.registries.repository_analysis import (
+    register_repository_analysis_tools,
+)
 from meta_mcp.tools.registries.client_management import register_client_management_tools
 from meta_mcp.tools.registries.token_analysis import register_token_analysis_tools
 from meta_mcp.tools.registries.repo_packing import register_repo_packing_tools
@@ -57,6 +59,24 @@ for logger_name in [
     "docket",
 ]:
     logging.getLogger(logger_name).setLevel(logging.WARNING)
+
+# Configure structlog to use standard logging (which points to stderr)
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
 
 logger = structlog.get_logger(__name__)
 

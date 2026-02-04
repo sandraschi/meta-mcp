@@ -42,6 +42,13 @@ TOOL_PORTMANTEAU_THRESHOLD = 15  # Repos with >15 tools should have portmanteau
 REQUIRED_TOOLS = ["help", "status"]  # Every MCP server should have these
 MCPB_FILES = ["manifest.json", "mcpb.json"]  # Desktop extension packaging
 
+# SOTA Mandatory Files (Section 8 Safety)
+SOTA_CRITICAL_FILES = [
+    "glama.json",  # Glama.ai integration
+    "manifest.json",  # MCP Packaging
+    "requirements.txt",  # Dependency management (fallback/legacy)
+]
+
 # Quality tooling
 RUFF_CONFIG_FILES = ["ruff.toml", ".ruff.toml"]  # Or [tool.ruff] in pyproject.toml
 TEST_DIRS = ["tests", "test"]  # Standard test directories
@@ -218,12 +225,15 @@ def analyze_runts_sync(
     include_sota: bool = True,
     format: str = "json",
     use_cache: bool = True,
+    deep_scan: bool = False,
 ):
     """Synchronous wrapper for analyze_runts."""
     import asyncio
 
     return asyncio.run(
-        analyze_runts(scan_path, max_depth, include_sota, format, use_cache)
+        analyze_runts(
+            scan_path, max_depth, include_sota, format, use_cache, deep_scan=deep_scan
+        )
     )
 
 
@@ -234,6 +244,7 @@ async def analyze_runts(
     format: str = "json",
     use_cache: bool = True,
     cache_ttl: int = 3600,
+    deep_scan: bool = False,
 ) -> Union[Dict[str, Any], str]:
     """
     Analyze MCP repositories to identify runts needing upgrades.
@@ -286,7 +297,7 @@ async def analyze_runts(
         # Small delay to reduce terminal spam and CPU usage
         await asyncio.sleep(0.1)  # 100ms delay between repos
 
-        repo_info = _analyze_repo(item)
+        repo_info = _analyze_repo(item, deep_scan=deep_scan)
         if repo_info:
             if repo_info.get("is_runt"):
                 runts.append(repo_info)
@@ -342,7 +353,11 @@ async def analyze_runts(
     estimated_runtime="2-5s",
 )
 async def get_repo_status(
-    repo_path: str, format: str = "json", use_cache: bool = True, cache_ttl: int = 3600
+    repo_path: str,
+    format: str = "json",
+    use_cache: bool = True,
+    cache_ttl: int = 3600,
+    deep_scan: bool = False,
 ) -> Union[Dict[str, Any], str]:
     """
     Get detailed SOTA status for a specific repository.
@@ -375,7 +390,7 @@ async def get_repo_status(
             return f"# Repository Status Failed\n\n**Error:** {error_result['error']}\n"
         return error_result
 
-    repo_info = _analyze_repo(path)
+    repo_info = _analyze_repo(path, deep_scan=deep_scan)
     if not repo_info:
         error_result = {
             "success": False,
@@ -415,7 +430,7 @@ async def get_repo_status(
     return repo_info
 
 
-def _analyze_repo(repo_path: Path) -> Optional[Dict[str, Any]]:
+def _analyze_repo(repo_path: Path, deep_scan: bool = False) -> Optional[Dict[str, Any]]:
     """Analyze a repository for MCP status."""
     info = {
         "name": repo_path.name,
@@ -459,7 +474,36 @@ def _analyze_repo(repo_path: Path) -> Optional[Dict[str, Any]]:
         "dependencies": [],
         "tools_metadata": [],
         "entry_points": {},
+        "missing_critical_files": [],
+        "has_toml_lint": False,
+        "has_yaml_lint": False,
+        "deep_scan_results": None,
     }
+
+    # SOTA Section 8: Critical File Checks
+    for crit_file in SOTA_CRITICAL_FILES:
+        if not (repo_path / crit_file).exists():
+            info["missing_critical_files"].append(crit_file)
+            info["is_runt"] = True
+            info["runt_reasons"].append(f"Missing critical file: {crit_file}")
+            info["recommendations"].append(f"Restore missing SOTA file: {crit_file}")
+
+    # Configuration Linting Presence
+    # (Checking for config or evidence in CI/toml)
+    if (repo_path / "ruff.toml").exists() or (repo_path / ".ruff.toml").exists():
+        info["has_toml_lint"] = True
+
+    # Check for yaml-lint or similar in CI
+    github_workflows = repo_path / ".github" / "workflows"
+    if github_workflows.exists():
+        for wf in github_workflows.glob("*.y*ml"):
+            try:
+                wf_content = wf.read_text(encoding="utf-8").lower()
+                if "yamllint" in wf_content or "action-yamllint" in wf_content:
+                    info["has_yaml_lint"] = True
+                    break
+            except Exception:
+                pass
 
     # Check for requirements.txt or pyproject.toml
     req_file = repo_path / "requirements.txt"
@@ -835,7 +879,82 @@ def _analyze_repo(repo_path: Path) -> Optional[Dict[str, Any]]:
     # Evaluate using rule-based system
     _evaluate_runt_status(info, fastmcp_version)
 
+    # NEW: Actively run tools if deep_scan is requested
+    if deep_scan:
+        info["deep_scan_results"] = _run_active_tools(repo_path)
+        if not info["deep_scan_results"]["ruff_pass"]:
+            info["is_runt"] = True
+            info["runt_reasons"].append(
+                f"Fails active Ruff linting ({info['deep_scan_results']['ruff_errors']} errors)"
+            )
+            info["recommendations"].append(
+                "Fix all Ruff errors (0 errors mandatory for CI/CD and Release)"
+            )
+            info["status_color"] = "red"
+        if not info["deep_scan_results"]["tests_pass"]:
+            info["is_runt"] = True
+            info["runt_reasons"].append("Fails active test execution")
+            info["status_color"] = "red"
+
     return info
+
+
+def _run_active_tools(repo_path: Path) -> Dict[str, Any]:
+    """Actively execute Ruff and tests on the repository."""
+    import subprocess
+
+    results = {
+        "ruff_pass": True,
+        "ruff_errors": 0,
+        "tests_pass": True,
+        "test_summary": "",
+    }
+
+    # Run Ruff
+    try:
+        ruff_proc = subprocess.run(
+            ["ruff", "check", "."],
+            cwd=str(repo_path),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if ruff_proc.returncode != 0:
+            results["ruff_pass"] = False
+            # Count errors (simplified count from output)
+            results["ruff_errors"] = len(ruff_proc.stdout.splitlines())
+    except Exception as e:
+        results["ruff_pass"] = False
+        results["ruff_error_msg"] = str(e)
+
+    # Run Tests (Master script or pytest)
+    test_commands = [
+        ["powershell", "-ExecutionPolicy", "Bypass", "-File", "./run_tests.ps1"],
+        ["pytest"],
+        ["python", "-m", "pytest"],
+    ]
+
+    for cmd in test_commands:
+        try:
+            # Check if file exists for binary-based commands
+            if cmd[0] == "powershell" and not (repo_path / "run_tests.ps1").exists():
+                continue
+
+            test_proc = subprocess.run(
+                cmd, cwd=str(repo_path), capture_output=True, text=True, check=False
+            )
+            if test_proc.returncode == 0:
+                results["tests_pass"] = True
+                results["test_summary"] = "Tests passed successfully"
+                break
+            else:
+                results["tests_pass"] = False
+                results["test_summary"] = test_proc.stdout[-500:]  # Last 500 chars
+        except Exception as e:
+            results["tests_pass"] = False
+            results["test_summary"] = f"Test execution failed: {str(e)}"
+
+    return results
 
 
 def _evaluate_runt_status(info: Dict[str, Any], fastmcp_version: str) -> None:

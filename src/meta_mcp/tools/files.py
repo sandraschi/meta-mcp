@@ -6,6 +6,11 @@ import tempfile
 from pathlib import Path
 from typing import List
 
+if os.name == "nt" and not hasattr(os, "statvfs"):
+    # aiofiles.os.statvfs is not available on Windows, but aiofiles 24.1.0+
+    # expects it to exist in the os module when it is imported.
+    os.statvfs = lambda path: None
+
 import aiofiles
 import aiofiles.os
 import structlog
