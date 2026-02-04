@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react'
 import { api, isSuccessResponse } from './api/client'
+import { logger, LogEntry } from './utils/logger'
 import { Layout } from './components/layout/Layout'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoggerModal } from './components/modals/LoggerModal'
 import { HelpModal } from './components/modals/HelpModal'
 import { DashboardPage } from './pages/Dashboard'
-import { RepositoryPage } from './pages/Repository'
+import { ServersPage } from './pages/Servers'
 import { ClientsPage } from './pages/Clients'
+import { BuildersPage } from './pages/Builders'
 import { ToolsPage } from './pages/Tools'
-import { Loader, AlertTriangle } from 'lucide-react'
+import { AnalysisPage } from './pages/Analysis'
+import { SettingsPage } from './pages/Settings'
+// import { Loader, AlertTriangle } from 'lucide-react'
 
 function App() {
     // Navigation State
@@ -21,20 +26,30 @@ function App() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [servers, setServers] = useState<Record<string, any>>({})
-    const [tools, setTools] = useState<Record<string, any>>({})
-    const [clients, setClients] = useState<Record<string, boolean>>({
-        'Claude': false,
-        'Cursor': false,
-        'Windsurf': false,
-        'Zed': false,
-        'Antigravity': true // Self
+    const [clients, setClients] = useState<Record<string, { connected: boolean, path?: string, error?: string }>>({
+        "claude": { connected: false },
+        "cursor": { connected: false },
+        "windsurf": { connected: false },
+        "zed": { connected: false },
+        "antigravity": { connected: false }
     })
+    const [tools, setTools] = useState<any[]>([])
 
     // Logs State (Shared)
     const [logs, setLogs] = useState<string[]>([])
 
     useEffect(() => {
         loadDashboardData()
+
+        // Subscribe to logger
+        const handleLog = (entry: LogEntry) => {
+            const timestamp = new Date(entry.timestamp).toLocaleTimeString()
+            const contextStr = entry.context ? JSON.stringify(entry.context) : ''
+            const logLine = `[${timestamp}] [${entry.level}] ${entry.message} ${contextStr}`
+            setLogs(prev => [...prev, logLine])
+        }
+
+        logger.on('log', handleLog)
 
         // Keyboard shortcuts
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,7 +70,11 @@ function App() {
         }
 
         window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            logger.off('log', handleLog)
+        }
     }, [])
 
     const loadDashboardData = async () => {
@@ -74,17 +93,35 @@ function App() {
             }
 
             // Fetch Tools
-            // We need to iterate known servers or use discovery.
-            // For now, let's just get local meta-mcp tools as a baseline plus any others discovered
-            const metaToolsResp = await api.executeTool('meta-mcp', 'mcp_list_server_tools', { server_id: 'meta-mcp' })
-            if (isSuccessResponse(metaToolsResp)) {
-                setTools(prev => ({ ...prev, 'meta-mcp': metaToolsResp.result }))
+            const toolsResp = await api.listTools()
+            if (isSuccessResponse(toolsResp)) {
+                const toolsMap = toolsResp.result || toolsResp.data || {}
+                const normalizedTools: any[] = []
+
+                Object.entries(toolsMap).forEach(([server, serverTools]) => {
+                    if (Array.isArray(serverTools)) {
+                        serverTools.forEach((t: any) => normalizedTools.push({ ...t, server }))
+                    } else if (typeof serverTools === 'object') {
+                        // The key is the tool name, the value is the tool info (which might lack name)
+                        Object.entries(serverTools as object).forEach(([toolName, toolData]: [string, any]) => {
+                            normalizedTools.push({
+                                name: toolName, // Ensure name is set from key
+                                ...toolData,
+                                server
+                            })
+                        })
+                    }
+                })
+                setTools(normalizedTools)
             }
 
+            // Fetch Tools is handled by ToolsPage now, so we can skip or keep for Dashboard summary
+            // Keeping mostly empty for now unless Dashboard needs it.
+            // But verify if DashboardPage needs tools?
         } catch (err) {
             console.error('Failed to load data', err)
+            logger.error(`Connection failure: ${err}`)
             setError('Failed to connect to MetaMCP server. Is the backend running?')
-            setLogs(prev => [...prev, `[ERROR] Connection failure: ${err}`])
         } finally {
             setIsLoading(false)
         }
@@ -93,40 +130,44 @@ function App() {
     const renderPage = () => {
         if (isLoading) {
             return (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-4">
-                    <Loader size={48} className="animate-spin text-blue-500" />
-                    <p className="font-mono text-sm animate-pulse">Initializing System...</p>
+                <div className="flex items-center justify-center h-64 text-slate-400">
+                    <div className="animate-spin mr-2 h-5 w-5 border-b-2 border-current rounded-full" />
+                    Loading system status...
                 </div>
             )
         }
 
         if (error) {
             return (
-                <div className="h-full flex flex-col items-center justify-center text-red-400 gap-4">
-                    <AlertTriangle size={48} />
-                    <div className="text-center">
-                        <h2 className="text-xl font-bold text-slate-200">Connection Error</h2>
-                        <p className="mt-2">{error}</p>
-                        <button
-                            onClick={loadDashboardData}
-                            className="mt-6 px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                        >
-                            Retry Connection
-                        </button>
-                    </div>
+                <div className="flex flex-col items-center justify-center h-64 text-red-400">
+                    <p className="mb-4">{error}</p>
+                    <button
+                        onClick={() => loadDashboardData()}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-sm transition-colors"
+                    >
+                        Retry Connection
+                    </button>
                 </div>
             )
         }
 
         switch (currentPage) {
             case 'dashboard':
-                return <DashboardPage servers={servers} />
-            case 'analysis': // Repurposed Repository Analysis
-                return <RepositoryPage />
+                return <DashboardPage servers={servers} clients={clients} tools={tools} />
+            case 'servers': // Changed from 'analysis' or 'repository'
+                return <ServersPage />
             case 'clients':
                 return <ClientsPage clients={clients} setClients={setClients} />
+            case 'builders':
+                return <BuildersPage />
+
+
             case 'tools':
                 return <ToolsPage tools={tools} />
+            case 'analysis':
+                return <AnalysisPage />
+            case 'settings':
+                return <SettingsPage />
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-500">
@@ -136,9 +177,15 @@ function App() {
         }
     }
 
+
     return (
-        <>
-            <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
+        <ErrorBoundary>
+            <Layout
+                currentPage={currentPage}
+                onNavigate={setCurrentPage}
+                onShowLogger={() => setShowLogger(true)}
+                onShowHelp={() => setShowHelp(true)}
+            >
                 {renderPage()}
             </Layout>
 
@@ -152,7 +199,7 @@ function App() {
                 isOpen={showHelp}
                 onClose={() => setShowHelp(false)}
             />
-        </>
+        </ErrorBoundary>
     )
 }
 

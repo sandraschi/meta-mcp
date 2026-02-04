@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import {
     Activity, Server, Home, Settings,
-    ChevronLeft, ChevronRight, Terminal, BarChart3, Database
+    ChevronLeft, ChevronRight, Terminal, BarChart3, Database, Hammer
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,8 +15,9 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: Home },
-        { id: 'servers', label: 'Servers', icon: Server },
+        { id: 'servers', label: 'Server Repos', icon: Server },
         { id: 'clients', label: 'Clients', icon: Database },
+        { id: 'builders', label: 'Builders', icon: Hammer },
         { id: 'tools', label: 'Tools', icon: Terminal },
         { id: 'analysis', label: 'Analysis', icon: BarChart3 },
         { id: 'settings', label: 'Settings', icon: Settings },
@@ -79,7 +80,8 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             {/* Collapse Trigger */}
             <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="h-12 border-t border-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-slate-900 transition-colors"
+                className="h-12 border-t border-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-slate-900 transition-colors w-full"
+                title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </button>

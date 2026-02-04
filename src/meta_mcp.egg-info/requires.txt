@@ -1,6 +1,7 @@
-fastmcp>=2.14.1
+fastmcp>=2.13.3
 fastapi
 uvicorn
+watchfiles
 jinja2
 pydantic-settings
 python-multipart

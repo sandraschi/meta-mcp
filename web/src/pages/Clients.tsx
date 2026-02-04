@@ -1,36 +1,120 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Database, RefreshCw, CheckCircle, XCircle, Loader } from 'lucide-react'
 import { api, isSuccessResponse } from '../api/client'
+import { JsonEditorModal } from '../components/modals/JsonEditorModal'
+
+export interface ClientState {
+    connected: boolean
+    path?: string
+    error?: string
+}
 
 interface ClientsProps {
-    clients: any
-    setClients: (clients: any) => void
+    clients: Record<string, ClientState>
+    setClients: (clients: Record<string, ClientState>) => void
 }
 
 export function ClientsPage({ clients, setClients }: ClientsProps) {
     const [checking, setChecking] = useState<Record<string, boolean>>({})
 
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [modalMode, setModalMode] = useState<'view' | 'edit'>('view')
+    const [selectedClient, setSelectedClient] = useState<string | null>(null)
+    const [configData, setConfigData] = useState<any>(null)
+
+    useEffect(() => {
+        handleCheckClients()
+    }, [])
+
     const handleCheckClients = async () => {
-        const newStatus = { ...clients }
+        // Set all to checking
+        setChecking(Object.keys(clients).reduce((acc, key) => ({ ...acc, [key]: true }), {}))
 
-        for (const client of Object.keys(clients)) {
-            setChecking(prev => ({ ...prev, [client]: true }))
-            try {
-                // In a real scenario, we might call check_client_integration here
-                // For now, we simulate a check or just assume if we have config it's "configured"
-                // Let's use read_client_config to verify we can access it.
+        try {
+            // Use 'check' operation to get all clients in one go
+            const response = await api.checkClientIntegration({
+                operation: 'check'
+            })
 
-                const response = await api.executeTool('meta-mcp', 'read_client_config', {
-                    client_name: client
+            const newStatus = { ...clients }
+
+            if (isSuccessResponse(response) && response.data) {
+                const results = response.data
+
+                Object.keys(clients).forEach(client => {
+                    const clientData = results[client]
+                    if (clientData) {
+                        newStatus[client] = {
+                            connected: clientData.installed,
+                            path: clientData.config_path,
+                            error: !clientData.installed ? 'Not installed' : undefined
+                        }
+                    } else {
+                        newStatus[client] = {
+                            connected: false,
+                            error: 'Not detected'
+                        }
+                    }
                 })
-
-                newStatus[client] = isSuccessResponse(response)
-            } catch (e) {
-                newStatus[client] = false
+            } else {
+                Object.keys(clients).forEach(client => {
+                    newStatus[client] = {
+                        connected: false,
+                        error: response.message || 'Check failed'
+                    }
+                })
             }
-            setChecking(prev => ({ ...prev, [client]: false }))
+            setClients(newStatus)
+        } catch (e) {
+            console.error('Failed to check clients:', e)
+            const newStatus = { ...clients }
+            Object.keys(clients).forEach(client => {
+                newStatus[client] = {
+                    connected: false,
+                    error: e instanceof Error ? e.message : 'Unknown error'
+                }
+            })
+            setClients(newStatus)
+        } finally {
+            setChecking({})
         }
-        setClients(newStatus)
+    }
+
+    const handleViewJson = async (clientName: string) => {
+        setSelectedClient(clientName)
+        setModalMode('view')
+        try {
+            const response = await api.getClientConfig(clientName)
+            if (isSuccessResponse(response)) {
+                setConfigData(response.data.config)
+                setIsModalOpen(true)
+            }
+        } catch (error) {
+            console.error('Failed to load client config:', error)
+        }
+    }
+
+    const handleConfigure = async (clientName: string) => {
+        setSelectedClient(clientName)
+        setModalMode('edit')
+        try {
+            const response = await api.getClientConfig(clientName)
+            if (isSuccessResponse(response)) {
+                setConfigData(response.data.config)
+                setIsModalOpen(true)
+            }
+        } catch (error) {
+            console.error('Failed to load client config:', error)
+        }
+    }
+
+    const handleSaveConfig = async (clientName: string, updatedData: any) => {
+        const response = await api.updateClientConfig(clientName, updatedData)
+        if (!isSuccessResponse(response)) {
+            throw new Error(response.message || 'Failed to update configuration')
+        }
+        handleCheckClients()
     }
 
     return (
@@ -50,7 +134,7 @@ export function ClientsPage({ clients, setClients }: ClientsProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Object.entries(clients).map(([name, connected]) => (
+                {Object.entries(clients).map(([name, value]) => (
                     <div key={name} className="bg-slate-900 border border-slate-800 rounded-xl p-6 group hover:border-blue-500/30 transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -61,7 +145,7 @@ export function ClientsPage({ clients, setClients }: ClientsProps) {
                             </div>
                             {checking[name] ? (
                                 <Loader size={20} className="animate-spin text-blue-500" />
-                            ) : connected ? (
+                            ) : value.connected ? (
                                 <CheckCircle size={20} className="text-green-500" />
                             ) : (
                                 <XCircle size={20} className="text-slate-600" />
@@ -71,29 +155,44 @@ export function ClientsPage({ clients, setClients }: ClientsProps) {
                         <div className="space-y-3">
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Integration</span>
-                                <span className={connected ? "text-green-400" : "text-slate-600"}>
-                                    {connected ? 'Active' : 'Not Detected'}
+                                <span className={value.connected ? "text-green-400" : "text-slate-600"}>
+                                    {value.connected ? 'Active' : 'Not Detected'}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Config Path</span>
-                                <span className="text-slate-400 font-mono text-xs truncate max-w-[150px]" title="Default Path">
-                                    ~/.config/{name.toLowerCase()}...
+                                <span className="text-slate-400 font-mono text-xs truncate max-w-[150px]" title={value.path || 'Unknown'}>
+                                    {value.path || 'Not detected'}
                                 </span>
                             </div>
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-slate-800 flex gap-2">
-                            <button className="flex-1 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-sm rounded-lg transition-colors">
+                            <button
+                                onClick={() => handleConfigure(name)}
+                                className="flex-1 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-sm rounded-lg transition-colors"
+                            >
                                 Configure
                             </button>
-                            <button className="flex-1 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-sm rounded-lg transition-colors">
+                            <button
+                                onClick={() => handleViewJson(name)}
+                                className="flex-1 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-sm rounded-lg transition-colors"
+                            >
                                 View JSON
                             </button>
                         </div>
                     </div>
                 ))}
             </div>
+
+            <JsonEditorModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                clientName={selectedClient}
+                initialData={configData}
+                mode={modalMode}
+                onSave={handleSaveConfig}
+            />
         </div>
     )
 }

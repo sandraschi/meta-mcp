@@ -74,6 +74,7 @@ class DiscoveryRequest(BaseModel):
 
     operation: str = Field(..., description="Discovery operation")
     client_type: Optional[str] = Field(None, description="Client type filter")
+    discovery_path: Optional[str] = Field(None, description="Path to scan for servers")
 
 
 class ScaffoldingRequest(BaseModel):
@@ -165,7 +166,9 @@ async def discover_servers(request: DiscoveryRequest):
     """Discover and analyze MCP servers across the system."""
     try:
         result = await discovery.discover_servers_api(
-            operation=request.operation, client_type=request.client_type
+            operation=request.operation,
+            client_type=request.client_type,
+            discovery_path=request.discovery_path,
         )
         return result
     except Exception as e:
@@ -236,7 +239,9 @@ async def get_detailed_health():
             "data": health_data,
             "timestamp": "2026-01-19T03:00:00Z",
             "services_count": len(health_data),
-            "healthy_services": sum(1 for s in health_data.values() if s.get("healthy", False)),
+            "healthy_services": sum(
+                1 for s in health_data.values() if s.get("healthy", False)
+            ),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
@@ -406,7 +411,12 @@ async def list_available_tools():
                 "pack_repository": {
                     "description": "Pack repository into AI-friendly formats",
                     "operations": ["pack"],
-                    "parameters": ["repo_path", "output_format", "include_patterns", "exclude_patterns"],
+                    "parameters": [
+                        "repo_path",
+                        "output_format",
+                        "include_patterns",
+                        "exclude_patterns",
+                    ],
                 },
                 "pack_repository_for_ai": {
                     "description": "Pack repository optimized for AI consumption",
@@ -461,7 +471,9 @@ async def get_server_status(server_id: str):
 
 # Tool Execution Endpoints
 @router.post("/tools/execute", summary="Execute Tool on Server")
-async def execute_tool(server_id: str, tool_name: str, parameters: Optional[Dict[str, Any]] = None):
+async def execute_tool(
+    server_id: str, tool_name: str, parameters: Optional[Dict[str, Any]] = None
+):
     """Execute a tool on a specific MCP server."""
     result = await tool_service.execute_tool(server_id, tool_name, parameters or {})
     if not result.get("success"):
@@ -479,14 +491,20 @@ async def list_server_tools(server_id: str):
 
 
 @router.post("/tools/validate", summary="Validate Tool Parameters")
-async def validate_tool_parameters(server_id: str, tool_name: str, parameters: Dict[str, Any]):
+async def validate_tool_parameters(
+    server_id: str, tool_name: str, parameters: Dict[str, Any]
+):
     """Validate parameters for a tool execution."""
-    result = await tool_service.validate_tool_parameters(server_id, tool_name, parameters)
+    result = await tool_service.validate_tool_parameters(
+        server_id, tool_name, parameters
+    )
     return result
 
 
 @router.get("/tools/history", summary="Get Tool Execution History")
-async def get_tool_history(server_id: str, tool_name: Optional[str] = None, limit: int = 10):
+async def get_tool_history(
+    server_id: str, tool_name: Optional[str] = None, limit: int = 10
+):
     """Get execution history for tools on a server."""
     result = await tool_service.get_tool_history(server_id, tool_name, limit)
     if not result.get("success"):
@@ -515,7 +533,9 @@ async def read_client_config(client_name: str):
 
 
 @router.post("/clients/{client_name}/config", summary="Update Client Config")
-async def update_client_config(client_name: str, updates: Dict[str, Any], backup: bool = True):
+async def update_client_config(
+    client_name: str, updates: Dict[str, Any], backup: bool = True
+):
     """Update MCP configuration for a specific client."""
     result = await client_manager.update_client_config(client_name, updates, backup)
     if not result.get("success"):
@@ -524,15 +544,21 @@ async def update_client_config(client_name: str, updates: Dict[str, Any], backup
 
 
 @router.post("/clients/{client_name}/servers", summary="Add Server to Client")
-async def add_server_to_client(client_name: str, server_name: str, server_config: Dict[str, Any]):
+async def add_server_to_client(
+    client_name: str, server_name: str, server_config: Dict[str, Any]
+):
     """Add an MCP server to a client's configuration."""
-    result = await client_manager.add_server_to_client(client_name, server_name, server_config)
+    result = await client_manager.add_server_to_client(
+        client_name, server_name, server_config
+    )
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("message"))
     return result
 
 
-@router.delete("/clients/{client_name}/servers/{server_name}", summary="Remove Server from Client")
+@router.delete(
+    "/clients/{client_name}/servers/{server_name}", summary="Remove Server from Client"
+)
 async def remove_server_from_client(client_name: str, server_name: str):
     """Remove an MCP server from a client's configuration."""
     result = await client_manager.remove_server_from_client(client_name, server_name)
@@ -565,7 +591,9 @@ async def analyze_file_tokens(file_path: str):
 
 
 @router.post("/tokens/analyze-directory", summary="Analyze Directory Tokens")
-async def analyze_directory_tokens(dir_path: str, extensions: Optional[List[str]] = None):
+async def analyze_directory_tokens(
+    dir_path: str, extensions: Optional[List[str]] = None
+):
     """Analyze token usage across files in a directory."""
     result = await token_analyzer.analyze_directory_tokens(dir_path, extensions)
     if not result.get("success"):
@@ -581,11 +609,16 @@ async def estimate_context_limits(token_count: int):
 
 # Repository Packing Endpoints
 @router.post("/repos/pack", summary="Pack Repository")
-async def pack_repository(repo_path: str, output_format: str = "xml",
-                         include_patterns: Optional[List[str]] = None,
-                         exclude_patterns: Optional[List[str]] = None):
+async def pack_repository(
+    repo_path: str,
+    output_format: str = "xml",
+    include_patterns: Optional[List[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+):
     """Pack repository contents into AI-friendly format."""
-    result = await repo_packer.pack_repository(repo_path, output_format, include_patterns, exclude_patterns)
+    result = await repo_packer.pack_repository(
+        repo_path, output_format, include_patterns, exclude_patterns
+    )
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("message"))
     return result

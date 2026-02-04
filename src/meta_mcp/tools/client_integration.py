@@ -114,8 +114,6 @@ async def discover_clients() -> List[Dict[str, Any]]:
     Returns:
         List of discovered client applications with installation status
     """
-    import shutil
-    import subprocess
 
     discovered_clients = []
 
@@ -155,6 +153,7 @@ async def discover_clients() -> List[Dict[str, Any]]:
         "zed": {
             "name": "Zed",
             "paths": [
+                r"C:\Users\{username}\scoop\shims\zed.exe",
                 r"C:\Users\{username}\AppData\Local\Zed\Zed.exe",
                 r"C:\Program Files\Zed\Zed.exe",
                 r"C:\Program Files (x86)\Zed\Zed.exe",
@@ -169,6 +168,7 @@ async def discover_clients() -> List[Dict[str, Any]]:
         "antigravity": {
             "name": "Antigravity IDE",
             "paths": [
+                r"C:\Users\{username}\AppData\Local\Programs\Antigravity\bin\antigravity.cmd",
                 r"C:\Users\{username}\.gemini\antigravity\antigravity.exe",
                 r"C:\Program Files\Gemini\Antigravity\antigravity.exe",
             ],
@@ -238,7 +238,7 @@ async def discover_clients() -> List[Dict[str, Any]]:
                 client_status["installed"] = True
                 client_status["status"] = "installed"
                 winreg.CloseKey(key)
-            except:
+            except Exception:
                 pass
 
         # Check configuration

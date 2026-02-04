@@ -5,6 +5,19 @@ All notable changes to Meta MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-02-04 - Stability & Client Detection Fixes 🔧
+
+### Fixed
+- **🚀 Discovery Service**: Removed incorrect `await` keywords on synchronous functions (`discover_clients`, `check_client_integration`), resolving a `TypeError` on the Server Repos page.
+- **🔍 Tools UI**: Increased `z-index` of the search bar container to prevent it from being hidden behind tool cards.
+
+### Added
+- **🖥️ Client Discovery**: Expanded detection paths for **Zed** (Scoop shims) and **Antigravity** (User-specific AppData).
+- **⚙️ Client Configuration**: Implemented functional "Configure" and "View JSON" buttons on the Clients page with a new JSON editor modal.
+
+### Changed
+- **🐘 Renaming**: Globally renamed "Server Zoo" to **"Server Repos"** for improved clarity and semantic alignment.
+
 ## [3.2.0] - 2026-02-04 - Premium Webapp & Backend Integration 💎
 
 ### 🚀 Major Feature Expansion

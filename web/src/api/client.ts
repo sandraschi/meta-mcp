@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger';
+
 /**
  * MetaMCP Frontend API Client
  * Handles communication with the MetaMCP backend REST API
@@ -51,6 +53,7 @@ class ApiClient {
             const data = await response.json();
             return data;
         } catch (error) {
+            logger.error('API request failed', { endpoint, error });
             console.error('API request failed:', error);
 
             let errorMessage = 'Unknown error occurred';
@@ -141,6 +144,23 @@ export const api = {
         return apiClient.post('/api/v1/analysis/runt-analyzer', params);
     },
 
+    // Server Management
+    async listRunningServers(): Promise<ApiResponse> {
+        return apiClient.post('/api/tools/execute', {
+            server_id: 'meta-mcp', // Executed internally by meta-mcp
+            tool_name: 'list_running_servers',
+            parameters: {}
+        });
+    },
+
+    async stopMcpServer(serverId: string): Promise<ApiResponse> {
+        return apiClient.post('/api/tools/execute', {
+            server_id: 'meta-mcp',
+            tool_name: 'stop_mcp_server',
+            parameters: { server_id: serverId }
+        });
+    },
+
     async getRepoStatus(params: {
         operation: string;
         repo_path?: string;
@@ -152,6 +172,7 @@ export const api = {
     async discoverServers(params: {
         operation: string;
         client_type?: string;
+        discovery_path?: string;
     }): Promise<ApiResponse> {
         return apiClient.post('/api/v1/discovery/servers', params);
     },
@@ -179,6 +200,19 @@ export const api = {
         deep_analysis?: boolean;
     }): Promise<ApiResponse> {
         return apiClient.post('/api/v1/repos/scan', params);
+    },
+
+    // Client Management
+    async getClientConfig(clientName: string): Promise<ApiResponse> {
+        return apiClient.get(`/api/v1/clients/${clientName}/config`);
+    },
+
+    async updateClientConfig(clientName: string, updates: any, backup: boolean = true): Promise<ApiResponse> {
+        return apiClient.post(`/api/v1/clients/${clientName}/config?backup=${backup}`, updates);
+    },
+
+    async validateClientConfig(clientName: string): Promise<ApiResponse> {
+        return apiClient.post(`/api/v1/clients/${clientName}/validate`);
     },
 };
 

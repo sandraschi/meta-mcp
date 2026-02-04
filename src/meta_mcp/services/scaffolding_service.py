@@ -18,30 +18,43 @@ class ScaffoldingService(MetaMCPService):
     ) -> Dict[str, Any]:
         """Create a fullstack application with FastAPI and React."""
         return await create_fullstack_app_tool(
-            name=config.name,
-            description=config.description,
-            author=config.author,
-            target_path=config.target_path,
-            include_ai=config.include_ai,
-            include_mcp=config.include_mcp,
-            include_mcp_server=config.include_mcp_server,
-            include_pwa=config.include_pwa,
-            include_monitoring=config.include_monitoring,
+            name=getattr(config, "name", "fullstack-app"),
+            description=getattr(
+                config, "description", "A modern fullstack application"
+            ),
+            author=getattr(config, "author", "Developer"),
+            target_path=getattr(config, "target_path", "."),
+            include_ai=getattr(config, "include_ai", True),
+            include_mcp=getattr(config, "include_mcp", True),
+            include_mcp_server=getattr(config, "include_mcp_server", True),
+            include_pwa=getattr(config, "include_pwa", True),
+            include_monitoring=getattr(config, "include_monitoring", True),
         )
 
     async def create_landing_page(
         self, config: Any, ctx: Optional[Any] = None
     ) -> Dict[str, Any]:
         """Create a responsive landing page."""
-        return await create_landing_page(
-            project_name=config.project_name,
-            hero_title=config.hero_title,
-            hero_subtitle=config.hero_subtitle,
-            github_url=config.github_url,
-            target_path=config.target_path,
-            author_name=config.author_name,
-            author_bio=config.author_bio,
-            show_locally=config.show_locally,
+        result = await create_landing_page(
+            project_name=getattr(config, "project_name", "landing-page"),
+            hero_title=getattr(config, "hero_title", "The Next Big Thing"),
+            hero_subtitle=getattr(
+                config,
+                "hero_subtitle",
+                "Revolutionizing the way you do things. Built in a cave. Powered by caffeine.",
+            ),
+            github_url=getattr(config, "github_url", "https://github.com"),
+            target_path=getattr(config, "target_path", "."),
+            author_name=getattr(config, "author_name", "Joe Shmoe"),
+            author_bio=getattr(
+                config,
+                "author_bio",
+                "I build things in my subterranean headquarters. Powered by free meals and cola courtesy of mum.",
+            ),
+            show_locally=getattr(config, "show_locally", False),
+        )
+        return (
+            {"success": True, "result": result} if isinstance(result, str) else result
         )
 
     async def create_mcp_server(
@@ -68,7 +81,7 @@ class ScaffoldingService(MetaMCPService):
             server_name=name,
             description=description,
             author=author,
-            repository_path=repository_path,
+            target_path=repository_path,
             license_type=license_type,
             include_ci=include_ci,
             include_tests=include_tests,
@@ -88,7 +101,11 @@ class ScaffoldingService(MetaMCPService):
     ) -> Dict[str, Any]:
         """Create a fullstack webshop application."""
         return await create_webshop_tool(
-            name=config.name, target_path=config.target_path
+            name=getattr(config, "name", "webshop"),
+            template=getattr(config, "template", "medusa"),
+            description=getattr(config, "description", "A premium e-commerce store"),
+            target_path=getattr(config, "target_path", "."),
+            config=getattr(config, "backend_config", None),
         )
 
     async def create_game(
@@ -96,7 +113,9 @@ class ScaffoldingService(MetaMCPService):
     ) -> Dict[str, Any]:
         """Create a browser-based game."""
         return await create_game_tool(
-            name=config.name, template=config.template, target_path=config.target_path
+            name=getattr(config, "name", "game"),
+            template=getattr(config, "template", "asteroids"),
+            target_path=getattr(config, "target_path", "."),
         )
 
     async def create_wisdom_tree(
@@ -104,7 +123,9 @@ class ScaffoldingService(MetaMCPService):
     ) -> Dict[str, Any]:
         """Create an interactive knowledge tree."""
         return await create_wisdom_tree_tool(
-            name=config.name, template=config.template, target_path=config.target_path
+            name=getattr(config, "name", "wisdom-tree"),
+            template=getattr(config, "template", "technical-roadmap"),
+            target_path=getattr(config, "target_path", "."),
         )
 
     async def create_project(

@@ -2,7 +2,7 @@
 
 **MetaMCP Enterprise** is the complete **"Argh-Coding" bloop-buster** - a comprehensive enterprise-grade management platform for MCP (Model Context Protocol) ecosystems.
 
-**Version**: 3.2.0 (SOTA Compliant)
+**Version**: 3.2.1 (SOTA Compliant)
 
 ## 🎯 The Mission
 We prevent developer pain points:
@@ -21,7 +21,7 @@ MetaMCP is organized into modular [Tool Suites](docs/tools/README.md) for comple
 - **[🖥️ Client Management](docs/tools/client-management.md)**: Config control for Claude, Cursor, Windsurf, Zed, Antigravity.
 - **[🔬 Diagnostics](docs/tools/diagnostics.md)**: EmojiBuster and Safe Scanner technology.
 - **[🔍 Analysis](docs/tools/analysis.md)**: Runt Analyzer and SOTA compliance checking.
-- **[🕵️ Discovery](docs/tools/discovery.md)**: Automatic server and integration scanning.
+- **[🕵️ Discovery](docs/tools/discovery.md)**: Automatic server and integration scanning (Server Repos).
 - **[🚀 Scaffolding](docs/tools/scaffolding.md)**: Enterprise-grade project generation.
 - **[🧠 Token Analysis](docs/tools/token-analysis.md)**: LLM context optimization.
 - **[📦 Repository Packing](docs/tools/repo-packing.md)**: AI-first content consolidation.

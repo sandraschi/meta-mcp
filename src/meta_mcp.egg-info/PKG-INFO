@@ -5,9 +5,86 @@ Summary: MetaMCP - The Ultimate 'Argh-Coding' Bloat-Buster - Comprehensive MCP s
 Author-email: Sandra Schipal <sandraschi@gmail.com>
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
-Requires-Dist: fastmcp>=2.14.1
+License-File: LICENSE
+Requires-Dist: fastmcp>=2.13.3
 Requires-Dist: fastapi
 Requires-Dist: uvicorn
+Requires-Dist: watchfiles
 Requires-Dist: jinja2
 Requires-Dist: pydantic-settings
 Requires-Dist: python-multipart
+Dynamic: license-file
+
+# Meta MCP Enterprise 🚀
+
+**MetaMCP Enterprise** is the complete **"Argh-Coding" bloop-buster** - a comprehensive enterprise-grade management platform for MCP (Model Context Protocol) ecosystems.
+
+**Version**: 3.2.0 (SOTA Compliant)
+
+## 🎯 The Mission
+We prevent developer pain points:
+- 🚨 Stop Unicode logging crashes (Hex-based Safe Scanner)
+- 🐳 Eliminate Docker confusion
+- 🔧 Fix framework assumption errors
+- 📦 Simplify MCPB packaging
+
+## 🏗️ Core Capabilities (10 Tool Suites)
+
+MetaMCP is organized into modular [Tool Suites](docs/tools/README.md) for complete ecosystem coverage:
+
+- **[🔧 Server Management](docs/tools/server-management.md)**: Lifecycle control with process isolation.
+- **[⚡ Tool Execution](docs/tools/tool-execution.md)**: Remote invocation across server networks.
+- **[📊 Repository Intelligence](docs/tools/repository-intelligence.md)**: Deep analysis and health scoring.
+- **[🖥️ Client Management](docs/tools/client-management.md)**: Config control for Claude, Cursor, Windsurf, Zed, Antigravity.
+- **[🔬 Diagnostics](docs/tools/diagnostics.md)**: EmojiBuster and Safe Scanner technology.
+- **[🔍 Analysis](docs/tools/analysis.md)**: Runt Analyzer and SOTA compliance checking.
+- **[🕵️ Discovery](docs/tools/discovery.md)**: Automatic server and integration scanning.
+- **[🚀 Scaffolding](docs/tools/scaffolding.md)**: Enterprise-grade project generation.
+- **[🧠 Token Analysis](docs/tools/token-analysis.md)**: LLM context optimization.
+- **[📦 Repository Packing](docs/tools/repo-packing.md)**: AI-first content consolidation.
+
+## 🚀 Quick Start
+
+For detailed installation, see **[INSTALL.md](INSTALL.md)**.
+
+### Installation
+```bash
+cd backend
+pip install -e .
+```
+
+### Configure in Cursor
+Add to your `mcp.json` or Cursor settings:
+```json
+{
+  "mcp": {
+    "meta-mcp": {
+      "command": "meta-mcp-server",
+      "args": [],
+      "cwd": "/absolute/path/to/meta_mcp/backend"
+    }
+  }
+}
+```
+
+### Start Enterprise Web Dashboard
+```bash
+meta-mcp
+# Access at: http://localhost:14400
+```
+
+#### 💎 New Premium Web Interface (v3.2.0)
+- **Live Tool Execution**: Direct backend communication via `executeTool`.
+- **Modular Architecture**: Retractable sidebar, persistent topbar, and reactive layout.
+- **Enterprise Dashboard**: Real-time health monitoring and service status.
+- **Interactive Modals**: Global Logger (Ctrl+`) and context-aware Help (?).
+
+
+## 📚 Documentation
+- **[PRD.md](PRD.md)**: Product Requirements
+- **[CHANGELOG.md](CHANGELOG.md)**: Version History
+- **[STANDARDS.md](STANDARDS.md)**: FastMCP SOTA Standards
+- **[TOOLS.md](docs/tools/README.md)**: Detailed Tool Documentation
+
+## 📄 License
+MIT License - see [LICENSE](LICENSE).

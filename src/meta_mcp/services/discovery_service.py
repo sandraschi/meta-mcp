@@ -13,25 +13,30 @@ class DiscoveryService(MetaMCPService):
         self, discovery_paths: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Discover MCP servers on the system."""
-        return await discover_servers(discovery_paths)
+        return discover_servers(discovery_paths)
 
     async def check_integration(self, ide_name: str) -> Dict[str, Any]:
         """Audit client integration status for a specific IDE."""
         # Note: check_client_integration in tools/client_integration.py does the heavy lifting
-        return await check_client_integration(ide_name)
+        return check_client_integration(ide_name)
 
     async def discover_servers_api(
-        self, operation: str, client_type: Optional[str] = None
+        self,
+        operation: str,
+        client_type: Optional[str] = None,
+        discovery_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Discover MCP servers with operation-based interface."""
         try:
-            if operation == "scan":
-                result = await self.discover_servers()
+            if operation == "scan" or operation == "scan_root":
+                paths = [discovery_path] if discovery_path else None
+                result = await self.discover_servers(paths)
                 return self.create_response(
                     True, "Server discovery completed", {"servers": result}
                 )
             elif operation == "list":
-                result = await self.discover_servers()
+                paths = [discovery_path] if discovery_path else None
+                result = await self.discover_servers(paths)
                 return self.create_response(
                     True, "Server list retrieved", {"servers": result}
                 )
@@ -49,7 +54,7 @@ class DiscoveryService(MetaMCPService):
         try:
             if operation == "check":
                 # Discover all installed clients
-                discovered_clients = await discover_clients()
+                discovered_clients = discover_clients()
 
                 # Convert to the expected format for compatibility
                 clients_dict = {}
@@ -76,7 +81,11 @@ class DiscoveryService(MetaMCPService):
                         except Exception:
                             pass
 
-                return self.create_response(True, f"Discovered {len(discovered_clients)} MCP clients", clients_dict)
+                return self.create_response(
+                    True,
+                    f"Discovered {len(discovered_clients)} MCP clients",
+                    clients_dict,
+                )
                 # Check all clients or specific client
                 clients_to_check = [
                     "claude",

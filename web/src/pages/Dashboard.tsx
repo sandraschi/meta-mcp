@@ -1,22 +1,32 @@
 import { Activity, Server, Zap, Cpu } from 'lucide-react'
 import { ServerInfo, ServerInfoData } from '../components/modules/ServerInfo'
 import { motion } from 'framer-motion'
+import { ClientState } from './Clients'
 
 interface DashboardProps {
     servers: Record<string, ServerInfoData>
+    clients: Record<string, ClientState>
+    tools: any[]
 }
 
-export function DashboardPage({ servers }: DashboardProps) {
+export function DashboardPage({ servers, clients, tools }: DashboardProps) {
     const serversList = Object.values(servers)
     const activeServers = serversList.filter(s => s.status === 'online').length
     const totalServers = serversList.length
 
-    // Mock system stats
+    // Calculate client stats
+    const totalClients = Object.keys(clients).length
+    const activeClients = Object.values(clients).filter(c => c.connected).length
+
+    // Tools stats
+    const totalTools = tools.length
+
+    // Mock system stats for now, mixed with real data
     const stats = [
         { label: 'Active Servers', value: `${activeServers}/${totalServers}`, icon: Server, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        { label: 'System Health', value: '98%', icon: Activity, color: 'text-green-400', bg: 'bg-green-500/10' },
-        { label: 'Request Rate', value: '1.2k/m', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-        { label: 'CPU Usage', value: '12%', icon: Cpu, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+        { label: 'Connected Clients', value: `${activeClients}/${totalClients}`, icon: Activity, color: 'text-green-400', bg: 'bg-green-500/10' },
+        { label: 'Available Tools', value: `${totalTools}`, icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+        { label: 'System Health', value: activeServers > 0 ? 'Good' : 'Unknown', icon: Cpu, color: 'text-purple-400', bg: 'bg-purple-500/10' },
     ]
 
     return (
